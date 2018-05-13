@@ -281,6 +281,25 @@ test20CanNotCreatePortfoliosWithAccountsManagedByOtherManagedPortfolio
 		withExceptionDo: [ :invalidPortfolio |
 			self assert: Portfolio accountAlreadyManagedErrorMessage = invalidPortfolio messageText ]! !
 
+!PortfolioTest methodsFor: 'tests' stamp: 'KFG 5/11/2018 20:02:25'!
+test21PortfolioWithAllAccountsActsLikePortfolioWithAccount1AndAccount2
+
+	| account1 account2 complexPortfolio complexPortfolioWithAllAccounts |
+	
+	account1 := ReceptiveAccount new.
+	account2 := ReceptiveAccount new.
+	complexPortfolio := Portfolio with: account1 with: account2.
+	complexPortfolioWithAllAccounts := Portfolio withAll: (OrderedCollection with: account1 with: account2).
+	 	
+	Deposit register: 100 on: account1.
+	Deposit register: 200 on: account2.
+		
+	self assert: complexPortfolioWithAllAccounts balance = complexPortfolio balance .
+	self assert: complexPortfolioWithAllAccounts transactions = complexPortfolio transactions .
+	self assert: (complexPortfolioWithAllAccounts manages: account1) = (complexPortfolio manages: account1) .
+	self assert: (complexPortfolioWithAllAccounts manages: account2) = (complexPortfolio manages: account2) .
+! !
+
 
 !classDefinition: #AccountTransaction category: #'Portfolio-Ejercicio'!
 Object subclass: #AccountTransaction
@@ -403,65 +422,59 @@ balance
 
 !classDefinition: #Portfolio category: #'Portfolio-Ejercicio'!
 SummarizingAccount subclass: #Portfolio
-	instanceVariableNames: 'account1 account2'
+	instanceVariableNames: 'accounts'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Portfolio-Ejercicio'!
 
-!Portfolio methodsFor: 'balance' stamp: 'KFG 5/7/2018 20:33:22'!
+!Portfolio methodsFor: 'balance' stamp: 'KFG 5/10/2018 22:28:11'!
 balance
 
-	^ account1 balance + account2 balance! !
+	^ accounts inject: 0 into: [ :balance :account | balance + (account balance) ]! !
 
 
-!Portfolio methodsFor: 'testing' stamp: 'KFG 5/7/2018 21:05:54'!
-initializeWith: anAccount1 with: anAccount2
+!Portfolio methodsFor: 'testing' stamp: 'KFG 5/10/2018 23:05:35'!
+initializeWithAllAccounts: aCollectionOfAccounts
+		
+	aCollectionOfAccounts withIndexDo: [ :account :index | 
+		aCollectionOfAccounts withIndexDo: [ :anotherAccount :anotherIndex | 
+			(index ~= anotherIndex and: (account manages: anotherAccount)) ifTrue: [
+				self error: self class accountAlreadyManagedErrorMessage
+			]
+		]
+	].
 
-	((anAccount1 manages: anAccount2) or: (anAccount2 manages: anAccount1)) 
-		ifTrue: [ self error: self class accountAlreadyManagedErrorMessage ].
-
-	account1 := anAccount1.
-	account2 := anAccount2.
+	accounts := aCollectionOfAccounts .
 	
 	^self! !
 
-!Portfolio methodsFor: 'testing' stamp: 'KFG 5/7/2018 20:07:58'!
+!Portfolio methodsFor: 'testing' stamp: 'KFG 5/10/2018 22:38:56'!
 manages: anAccount
 
-	^ (account1 manages: anAccount) or: 
-		(account2 manages: anAccount) or: 
-		(self = anAccount) or: 
-		(account1 = anAccount) or:
-		(account2 = anAccount )
-! !
+	^ (self = anAccount) or:	(accounts anySatisfy: [ :account | account = anAccount or: (account manages: anAccount) ]).! !
 
-!Portfolio methodsFor: 'testing' stamp: 'KFG 5/7/2018 20:01:12'!
+!Portfolio methodsFor: 'testing' stamp: 'KFG 5/10/2018 22:36:05'!
 registers: aTtransaction
 
-	^ (account1 registers: aTtransaction) or: (account2 registers: aTtransaction)! !
+	^ accounts anySatisfy: [ :account | account registers: aTtransaction ].! !
 
 
-!Portfolio methodsFor: 'transactions' stamp: 'KFG 5/7/2018 20:43:13'!
+!Portfolio methodsFor: 'transactions' stamp: 'KFG 5/10/2018 22:44:02'!
 transactions 
 
-	| account1Transactions account2Transactions |
-	account1Transactions := account1 transactions.
-	account2Transactions := account2 transactions.
-	account1Transactions addAll: account2Transactions.
-	^account1Transactions! !
+	| transactions |
+	transactions :=  OrderedCollection new.
+	accounts do: [ :account | transactions addAll: account transactions ].
+	^ transactions! !
 
-!Portfolio methodsFor: 'transactions' stamp: 'KFG 5/7/2018 21:03:14'!
+!Portfolio methodsFor: 'transactions' stamp: 'KFG 5/10/2018 22:47:48'!
 transactionsOf: anAccount 
 
-	(account1 manages: anAccount)
-		ifTrue: [
-			^account1 transactions
-		].
-	(account2 manages: anAccount)
-		ifTrue: [
-			^account2 transactions
-		].
-	self error: self class accountNotManagedMessageDescription.! !
+	^(accounts 
+		detect: [ :account | account manages: anAccount ] 
+		ifNone: [ self error: self class accountNotManagedMessageDescription. ]) 
+		transactions
+! !
 
 "-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- "!
 
@@ -479,15 +492,15 @@ accountNotManagedMessageDescription
 	
 	^'Account not managed'! !
 
-!Portfolio class methodsFor: 'instance creation' stamp: 'KFG 5/7/2018 19:35:17'!
+!Portfolio class methodsFor: 'instance creation' stamp: 'KFG 5/11/2018 19:27:51'!
 with: anAccount1 with: anAccount2
 
-	^ self new initializeWith: anAccount1 with: anAccount2! !
+	^ self new initializeWithAllAccounts: (OrderedCollection with: anAccount1 with: anAccount2)! !
 
-!Portfolio class methodsFor: 'instance creation' stamp: 'HernanWilkinson 7/13/2011 18:41'!
+!Portfolio class methodsFor: 'instance creation' stamp: 'KFG 5/10/2018 22:14:47'!
 withAll: aCollectionOfAccounts
 
-	self shouldBeImplemented ! !
+	^self new initializeWithAllAccounts: aCollectionOfAccounts .! !
 
 
 !classDefinition: #ReceptiveAccount category: #'Portfolio-Ejercicio'!
