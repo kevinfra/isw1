@@ -530,20 +530,22 @@ accountSummaryLinesOf: aReceptiveAccount
 	
 	^aReceptiveAccount accountSummary! !
 
-!PortfolioTest methodsFor: 'test support' stamp: 'HernanWilkinson 9/6/2016 19:43'!
+!PortfolioTest methodsFor: 'test support' stamp: 'KFG 5/14/2018 19:00:39'!
 accountTransferNetOf: aReceptiveAccount 
-	
-	self shouldBeImplemented ! !
+	"Calcula el total de las trasnferencias"
+	^aReceptiveAccount transfers inject: 0 into: [ :transferNet :transfer | transferNet + transfer valueForDescription ]! !
 
-!PortfolioTest methodsFor: 'test support' stamp: 'HernanWilkinson 9/6/2016 19:43'!
+!PortfolioTest methodsFor: 'test support' stamp: 'KFG 5/14/2018 17:53:50'!
 investmentEarningsOf: aReceptiveAccount 
 	
-	self shouldBeImplemented ! !
+	^ aReceptiveAccount certificatesOfDeposit inject: 0 into: [ :earnings :certificate | 
+		earnings + ((0 - certificate value) * ((certificate tna)/360)*(certificate duration))
+	]! !
 
-!PortfolioTest methodsFor: 'test support' stamp: 'HernanWilkinson 9/6/2016 19:43'!
+!PortfolioTest methodsFor: 'test support' stamp: 'KFG 5/14/2018 17:47:32'!
 investmentNetOf: aReceptiveAccount 
 	
-	self shouldBeImplemented ! !
+	^aReceptiveAccount certificatesOfDeposit inject: 0 into: [ :total :certificate | total - certificate value ]! !
 
 !PortfolioTest methodsFor: 'test support' stamp: 'HernanWilkinson 9/6/2016 19:43'!
 portofolioTreeOf: aPortfolio namingAccountWith: aDictionary 
@@ -563,6 +565,11 @@ Object subclass: #AccountTransaction
 	poolDictionaries: ''
 	category: 'PortfolioTreePrinter-Ejercicio'!
 
+
+!AccountTransaction methodsFor: 'evaluating' stamp: 'KFG 5/14/2018 18:47:47'!
+affectBalance: anAccount
+
+	self subclassResponsibility ! !
 
 !AccountTransaction methodsFor: 'evaluating' stamp: 'KFG 5/13/2018 23:53:20'!
 description
@@ -598,6 +605,51 @@ AccountTransaction subclass: #CertificateOfDeposit
 	poolDictionaries: ''
 	category: 'PortfolioTreePrinter-Ejercicio'!
 
+!CertificateOfDeposit methodsFor: 'as yet unclassified' stamp: 'KFG 5/14/2018 19:01:18'!
+affectBalance: anAccount
+
+	anAccount substractFromBalance: value! !
+
+!CertificateOfDeposit methodsFor: 'as yet unclassified' stamp: 'KFG 5/14/2018 17:59:19'!
+description
+	| format |
+	format := Array with: (0-value) with: numberOfDays with: tna*100.
+	^'Plazo fijo por {1} durante {2} dias a una tna de {3}%' format: format! !
+
+!CertificateOfDeposit methodsFor: 'as yet unclassified' stamp: 'KFG 5/14/2018 17:50:50'!
+duration
+	^numberOfDays ! !
+
+!CertificateOfDeposit methodsFor: 'as yet unclassified' stamp: 'KFG 5/14/2018 17:43:08'!
+initializeWith: aValue during: days at: aRate on: aReceptiveAccount 
+
+	value := 0 - aValue .
+	tna := aRate .
+	numberOfDays := days .
+	account := aReceptiveAccount .! !
+
+!CertificateOfDeposit methodsFor: 'as yet unclassified' stamp: 'KFG 5/14/2018 17:50:43'!
+tna
+	^tna! !
+
+!CertificateOfDeposit methodsFor: 'as yet unclassified' stamp: 'KFG 5/14/2018 17:42:27'!
+value
+	^value! !
+
+"-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- "!
+
+!classDefinition: 'CertificateOfDeposit class' category: #'PortfolioTreePrinter-Ejercicio'!
+CertificateOfDeposit class
+	instanceVariableNames: ''!
+
+!CertificateOfDeposit class methodsFor: 'as yet unclassified' stamp: 'KFG 5/14/2018 17:44:10'!
+register: aValue during: days at: aRate on: aReceptiveAccount 
+	
+	| certificate |
+	certificate := self new initializeWith: aValue during: days at: aRate on: aReceptiveAccount .
+	aReceptiveAccount registerCertificate: certificate.
+	^certificate ! !
+
 
 !classDefinition: #Deposit category: #'PortfolioTreePrinter-Ejercicio'!
 AccountTransaction subclass: #Deposit
@@ -611,6 +663,11 @@ initializeFor: aValue
 
 	value := aValue ! !
 
+
+!Deposit methodsFor: 'value' stamp: 'KFG 5/14/2018 18:39:50'!
+affectBalance: anAccount
+
+	anAccount addToBalance: value! !
 
 !Deposit methodsFor: 'value' stamp: 'KFG 5/13/2018 23:53:09'!
 description
@@ -657,6 +714,11 @@ initializeFor: aValue
 	value := aValue ! !
 
 
+!Withdraw methodsFor: 'value' stamp: 'KFG 5/14/2018 18:40:50'!
+affectBalance: anAccount
+
+	anAccount substractFromBalance: value! !
+
 !Withdraw methodsFor: 'value' stamp: 'KFG 5/13/2018 23:51:26'!
 description
 
@@ -678,14 +740,13 @@ for: aValue
 
 	^ self new initializeFor: aValue ! !
 
-!Withdraw class methodsFor: 'instance creation' stamp: 'KFG 5/13/2018 23:35:47'!
+!Withdraw class methodsFor: 'instance creation' stamp: 'KFG 5/14/2018 18:41:24'!
 register: aValue on: account
 
-	| withdraw adaptedWithdraw |
+	| withdraw |
 	
 	withdraw := self for: aValue.
-	adaptedWithdraw := WithdrawAdapter adapt: withdraw.
-	account register: adaptedWithdraw.
+	account register: withdraw .
 	
 	^ withdraw! !
 
@@ -844,16 +905,19 @@ accountNotManagedMessageDescription
 
 !classDefinition: #ReceptiveAccount category: #'PortfolioTreePrinter-Ejercicio'!
 SummarizingAccount subclass: #ReceptiveAccount
-	instanceVariableNames: 'transactions'
+	instanceVariableNames: 'transactions transfers certificatesOfDeposit balance'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'PortfolioTreePrinter-Ejercicio'!
 
-!ReceptiveAccount methodsFor: 'initialization' stamp: 'KFG 5/13/2018 23:09:48'!
+!ReceptiveAccount methodsFor: 'initialization' stamp: 'KFG 5/14/2018 18:42:13'!
 initialize
 
 	super initialize.
-	transactions := OrderedCollection new.! !
+	balance := 0.
+	transactions := OrderedCollection new.
+	transfers := OrderedCollection new.
+	certificatesOfDeposit := OrderedCollection new.! !
 
 
 !ReceptiveAccount methodsFor: 'transactions' stamp: 'KFG 5/13/2018 23:47:07'!
@@ -861,10 +925,33 @@ accountSummary
 
 	^ transactions collect: [ :transaction | transaction description ]! !
 
-!ReceptiveAccount methodsFor: 'transactions' stamp: 'HernanWilkinson 7/13/2011 18:37'!
+!ReceptiveAccount methodsFor: 'transactions' stamp: 'KFG 5/14/2018 17:45:30'!
+certificatesOfDeposit
+
+	^ certificatesOfDeposit copy! !
+
+!ReceptiveAccount methodsFor: 'transactions' stamp: 'KFG 5/14/2018 18:39:16'!
 register: aTransaction
 
-	transactions add: aTransaction 
+	transactions add: aTransaction .
+	aTransaction affectBalance: self
+
+! !
+
+!ReceptiveAccount methodsFor: 'transactions' stamp: 'KFG 5/14/2018 19:02:04'!
+registerCertificate: aCertificateOfDeposit
+
+	transactions add: aCertificateOfDeposit .
+	certificatesOfDeposit add: aCertificateOfDeposit .
+	aCertificateOfDeposit affectBalance: self
+! !
+
+!ReceptiveAccount methodsFor: 'transactions' stamp: 'KFG 5/14/2018 18:50:08'!
+registerTransfer: aTransfer
+
+	transactions add: aTransfer .
+	transfers add: aTransfer .
+	aTransfer affectBalance: self
 ! !
 
 !ReceptiveAccount methodsFor: 'transactions' stamp: 'HernanWilkinson 7/13/2011 18:37'!
@@ -872,12 +959,22 @@ transactions
 
 	^ transactions copy! !
 
+!ReceptiveAccount methodsFor: 'transactions' stamp: 'KFG 5/14/2018 17:26:12'!
+transfers
 
-!ReceptiveAccount methodsFor: 'balance' stamp: 'KFG 5/13/2018 23:20:17'!
+	^ transfers copy! !
+
+
+!ReceptiveAccount methodsFor: 'balance' stamp: 'KFG 5/14/2018 18:38:31'!
 balance
 
-	^ transactions inject: 0 into: [ :balance :transaction | balance + transaction value ].! !
+	^ balance! !
 
+
+!ReceptiveAccount methodsFor: 'testing' stamp: 'KFG 5/14/2018 18:40:14'!
+addToBalance: aValue
+
+	balance := balance + aValue.! !
 
 !ReceptiveAccount methodsFor: 'testing' stamp: 'HernanWilkinson 7/13/2011 18:37'!
 manages: anAccount
@@ -890,6 +987,11 @@ registers: aTtransaction
 
 	^ transactions includes: aTtransaction
 ! !
+
+!ReceptiveAccount methodsFor: 'testing' stamp: 'KFG 5/14/2018 18:41:02'!
+substractFromBalance: aValue
+
+	balance := balance - aValue.! !
 
 
 !classDefinition: #Transfer category: #'PortfolioTreePrinter-Ejercicio'!
@@ -926,54 +1028,64 @@ value
 Transfer class
 	instanceVariableNames: ''!
 
-!Transfer class methodsFor: 'as yet unclassified' stamp: 'KFG 5/13/2018 23:37:50'!
+!Transfer class methodsFor: 'as yet unclassified' stamp: 'KFG 5/14/2018 17:31:14'!
 register: anAmount from: anAccount to: anotherAccount
-
 	| transfer receivedTransfer sourceTransfer |
-	
-	transfer := self new initializeFor: anAmount from: anAccount to: anotherAccount .
-	sourceTransfer := SourceTransfer register: transfer. 
-	anAccount register: sourceTransfer.
-	receivedTransfer := ReceivedTransfer register: transfer.
-	anotherAccount register: receivedTransfer.
-		
-	^ transfer! !
+	transfer _ self new
+		initializeFor: anAmount
+		from: anAccount
+		to: anotherAccount.
+	sourceTransfer _ TransferWithdraw register: transfer.
+	anAccount registerTransfer: sourceTransfer.
+	receivedTransfer _ TransferDeposit register: transfer.
+	anotherAccount registerTransfer: receivedTransfer.
+	^ transfer.! !
 
 
-!classDefinition: #TransferAdapter category: #'PortfolioTreePrinter-Ejercicio'!
-Object subclass: #TransferAdapter
+!classDefinition: #TransferTransaction category: #'PortfolioTreePrinter-Ejercicio'!
+Object subclass: #TransferTransaction
 	instanceVariableNames: 'transfer'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'PortfolioTreePrinter-Ejercicio'!
 
-!TransferAdapter methodsFor: 'as yet unclassified' stamp: 'KFG 5/13/2018 23:52:43'!
+!TransferTransaction methodsFor: 'as yet unclassified' stamp: 'KFG 5/14/2018 18:53:03'!
+affectBalance: anAccount
+
+	^self subclassResponsibility ! !
+
+!TransferTransaction methodsFor: 'as yet unclassified' stamp: 'KFG 5/14/2018 18:57:30'!
 description
 
-	^ 'Transferencia por {1}' format: {self value} ! !
+	^ 'Transferencia por {1}' format: {self valueForDescription ! !
 
-!TransferAdapter methodsFor: 'as yet unclassified' stamp: 'KFG 5/13/2018 23:16:57'!
+!TransferTransaction methodsFor: 'as yet unclassified' stamp: 'KFG 5/13/2018 23:16:57'!
 initializeWithTransfer: aTransfer
 
 	transfer := aTransfer! !
 
-!TransferAdapter methodsFor: 'as yet unclassified' stamp: 'KFG 5/13/2018 23:17:15'!
+!TransferTransaction methodsFor: 'as yet unclassified' stamp: 'KFG 5/13/2018 23:17:15'!
 transfer
 	
 	^transfer! !
 
-!TransferAdapter methodsFor: 'as yet unclassified' stamp: 'KFG 5/13/2018 23:17:31'!
+!TransferTransaction methodsFor: 'as yet unclassified' stamp: 'KFG 5/14/2018 18:55:52'!
 value
 
-	^self subclassResponsibility ! !
+	^transfer value! !
+
+!TransferTransaction methodsFor: 'as yet unclassified' stamp: 'KFG 5/14/2018 18:57:44'!
+valueForDescription
+
+	self subclassResponsibility ! !
 
 "-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- "!
 
-!classDefinition: 'TransferAdapter class' category: #'PortfolioTreePrinter-Ejercicio'!
-TransferAdapter class
+!classDefinition: 'TransferTransaction class' category: #'PortfolioTreePrinter-Ejercicio'!
+TransferTransaction class
 	instanceVariableNames: ''!
 
-!TransferAdapter class methodsFor: 'as yet unclassified' stamp: 'KFG 5/13/2018 23:36:32'!
+!TransferTransaction class methodsFor: 'as yet unclassified' stamp: 'KFG 5/13/2018 23:36:32'!
 register: aTransfer
 	
 	|adaptedTransfer |
@@ -983,67 +1095,37 @@ register: aTransfer
 	^ adaptedTransfer! !
 
 
-!classDefinition: #ReceivedTransfer category: #'PortfolioTreePrinter-Ejercicio'!
-TransferAdapter subclass: #ReceivedTransfer
+!classDefinition: #TransferDeposit category: #'PortfolioTreePrinter-Ejercicio'!
+TransferTransaction subclass: #TransferDeposit
 	instanceVariableNames: ''
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'PortfolioTreePrinter-Ejercicio'!
 
-!ReceivedTransfer methodsFor: 'as yet unclassified' stamp: 'KFG 5/13/2018 23:18:00'!
-value
+!TransferDeposit methodsFor: 'as yet unclassified' stamp: 'KFG 5/14/2018 18:52:52'!
+affectBalance: anAccount
+	
+	^anAccount addToBalance: self value! !
 
-	^transfer value! !
+!TransferDeposit methodsFor: 'as yet unclassified' stamp: 'KFG 5/14/2018 18:58:08'!
+valueForDescription
+	
+	^self value! !
 
 
-!classDefinition: #SourceTransfer category: #'PortfolioTreePrinter-Ejercicio'!
-TransferAdapter subclass: #SourceTransfer
+!classDefinition: #TransferWithdraw category: #'PortfolioTreePrinter-Ejercicio'!
+TransferTransaction subclass: #TransferWithdraw
 	instanceVariableNames: ''
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'PortfolioTreePrinter-Ejercicio'!
 
-!SourceTransfer methodsFor: 'as yet unclassified' stamp: 'KFG 5/13/2018 23:17:47'!
-value
+!TransferWithdraw methodsFor: 'as yet unclassified' stamp: 'KFG 5/14/2018 18:52:21'!
+affectBalance: anAccount
 	
-	^0 - transfer value! !
+	^anAccount substractFromBalance: self value! !
 
-
-!classDefinition: #WithdrawAdapter category: #'PortfolioTreePrinter-Ejercicio'!
-Object subclass: #WithdrawAdapter
-	instanceVariableNames: 'withdrawTransaction'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'PortfolioTreePrinter-Ejercicio'!
+!TransferWithdraw methodsFor: 'as yet unclassified' stamp: 'KFG 5/14/2018 18:58:24'!
+valueForDescription
 
-!WithdrawAdapter methodsFor: 'as yet unclassified' stamp: 'KFG 5/13/2018 23:44:41'!
-= aWithdrawTransaction
-
-	
-	^ withdrawTransaction = aWithdrawTransaction ! !
-
-!WithdrawAdapter methodsFor: 'as yet unclassified' stamp: 'KFG 5/13/2018 23:47:49'!
-description
-
-	^ withdrawTransaction description! !
-
-!WithdrawAdapter methodsFor: 'as yet unclassified' stamp: 'KFG 5/13/2018 23:40:00'!
-initializeWithTransaction: aWithdrawTransaction
-
-	withdrawTransaction := aWithdrawTransaction! !
-
-!WithdrawAdapter methodsFor: 'as yet unclassified' stamp: 'KFG 5/13/2018 23:38:51'!
-value
-	
-	^ 0 - withdrawTransaction value! !
-
-"-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- "!
-
-!classDefinition: 'WithdrawAdapter class' category: #'PortfolioTreePrinter-Ejercicio'!
-WithdrawAdapter class
-	instanceVariableNames: ''!
-
-!WithdrawAdapter class methodsFor: 'as yet unclassified' stamp: 'KFG 5/13/2018 23:39:33'!
-adapt: aWithdrawTransaction
-
-	^self new initializeWithTransaction: aWithdrawTransaction ! !
+	^0 - self value! !
