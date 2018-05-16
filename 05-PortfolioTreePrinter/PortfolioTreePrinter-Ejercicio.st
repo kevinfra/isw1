@@ -530,22 +530,22 @@ accountSummaryLinesOf: aReceptiveAccount
 	
 	^aReceptiveAccount accountSummary! !
 
-!PortfolioTest methodsFor: 'test support' stamp: 'KFG 5/14/2018 19:00:39'!
+!PortfolioTest methodsFor: 'test support' stamp: 'KFG 5/16/2018 00:15:46'!
 accountTransferNetOf: aReceptiveAccount 
 	"Calcula el total de las trasnferencias"
 	^aReceptiveAccount transfers inject: 0 into: [ :transferNet :transfer | transferNet + transfer valueForDescription ]! !
 
-!PortfolioTest methodsFor: 'test support' stamp: 'KFG 5/14/2018 17:53:50'!
+!PortfolioTest methodsFor: 'test support' stamp: 'KFG 5/16/2018 00:18:29'!
 investmentEarningsOf: aReceptiveAccount 
 	
 	^ aReceptiveAccount certificatesOfDeposit inject: 0 into: [ :earnings :certificate | 
-		earnings + ((0 - certificate value) * ((certificate tna)/360)*(certificate duration))
+		earnings + ((certificate value) * ((certificate tna)/360)*(certificate duration))
 	]! !
 
-!PortfolioTest methodsFor: 'test support' stamp: 'KFG 5/14/2018 17:47:32'!
+!PortfolioTest methodsFor: 'test support' stamp: 'KFG 5/16/2018 00:15:55'!
 investmentNetOf: aReceptiveAccount 
 	
-	^aReceptiveAccount certificatesOfDeposit inject: 0 into: [ :total :certificate | total - certificate value ]! !
+	^aReceptiveAccount certificatesOfDeposit inject: 0 into: [ :total :certificate | total + certificate value ]! !
 
 !PortfolioTest methodsFor: 'test support' stamp: 'HernanWilkinson 9/6/2016 19:43'!
 portofolioTreeOf: aPortfolio namingAccountWith: aDictionary 
@@ -610,20 +610,20 @@ affectBalance: anAccount
 
 	anAccount substractFromBalance: value! !
 
-!CertificateOfDeposit methodsFor: 'as yet unclassified' stamp: 'KFG 5/14/2018 17:59:19'!
+!CertificateOfDeposit methodsFor: 'as yet unclassified' stamp: 'KFG 5/16/2018 00:19:31'!
 description
 	| format |
-	format := Array with: (0-value) with: numberOfDays with: tna*100.
+	format := Array with: value with: numberOfDays with: tna*100.
 	^'Plazo fijo por {1} durante {2} dias a una tna de {3}%' format: format! !
 
 !CertificateOfDeposit methodsFor: 'as yet unclassified' stamp: 'KFG 5/14/2018 17:50:50'!
 duration
 	^numberOfDays ! !
 
-!CertificateOfDeposit methodsFor: 'as yet unclassified' stamp: 'KFG 5/14/2018 17:43:08'!
+!CertificateOfDeposit methodsFor: 'as yet unclassified' stamp: 'KFG 5/16/2018 00:10:36'!
 initializeWith: aValue during: days at: aRate on: aReceptiveAccount 
 
-	value := 0 - aValue .
+	value := aValue .
 	tna := aRate .
 	numberOfDays := days .
 	account := aReceptiveAccount .! !
