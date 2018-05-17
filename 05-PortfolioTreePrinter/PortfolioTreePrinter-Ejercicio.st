@@ -547,15 +547,16 @@ investmentNetOf: aReceptiveAccount
 	
 	^aReceptiveAccount certificatesOfDeposit inject: 0 into: [ :total :certificate | total + certificate value ]! !
 
-!PortfolioTest methodsFor: 'test support' stamp: 'HernanWilkinson 9/6/2016 19:43'!
+!PortfolioTest methodsFor: 'test support' stamp: 'KFG 5/17/2018 00:03:28'!
 portofolioTreeOf: aPortfolio namingAccountWith: aDictionary 
 	
-	self shouldBeImplemented ! !
+	^ aPortfolio printNamingAccountsWith: aDictionary! !
 
-!PortfolioTest methodsFor: 'test support' stamp: 'HernanWilkinson 9/6/2016 19:43'!
+!PortfolioTest methodsFor: 'test support' stamp: 'KFG 5/17/2018 00:59:02'!
 reversePortofolioTreeOf: aPortfolio namingAccountWith: aDictionary 
 	
-	self shouldBeImplemented ! !
+	^ (self portofolioTreeOf: aPortfolio namingAccountWith: aDictionary) reversed 
+! !
 
 
 !classDefinition: #AccountTransaction category: #'PortfolioTreePrinter-Ejercicio'!
@@ -564,7 +565,6 @@ Object subclass: #AccountTransaction
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'PortfolioTreePrinter-Ejercicio'!
-
 
 !AccountTransaction methodsFor: 'evaluating' stamp: 'KFG 5/14/2018 18:47:47'!
 affectBalance: anAccount
@@ -769,6 +769,14 @@ registers: aTransaction
 	self subclassResponsibility ! !
 
 
+!SummarizingAccount methodsFor: 'transactions' stamp: 'KFG 5/17/2018 00:51:17'!
+addCurrentName: name toPrinter: externalPrinter atLevel: aLevel
+
+	| nameAtCurrentLevel |
+	nameAtCurrentLevel := name.
+	aLevel timesRepeat: [  nameAtCurrentLevel := nameAtCurrentLevel appendToString: ' ' ].
+	externalPrinter add: nameAtCurrentLevel.! !
+
 !SummarizingAccount methodsFor: 'transactions' stamp: 'HernanWilkinson 7/13/2011 18:34'!
 balance
 
@@ -779,7 +787,6 @@ transactions
 
 	self subclassResponsibility ! !
 
-
 
 !classDefinition: #Portfolio category: #'PortfolioTreePrinter-Ejercicio'!
 SummarizingAccount subclass: #Portfolio
@@ -787,7 +794,6 @@ SummarizingAccount subclass: #Portfolio
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'PortfolioTreePrinter-Ejercicio'!
-
 
 !Portfolio methodsFor: 'testing' stamp: 'HAW 5/8/2018 16:46:26'!
 anyManagedAccountManages: anAccount 
@@ -825,6 +831,27 @@ balance
 
 	^ accounts sum: [ :account | account balance ]
 ! !
+
+!Portfolio methodsFor: 'transactions' stamp: 'KFG 5/17/2018 00:49:56'!
+continuePrintingOn: externalPrinter namingAccountsWith: aDictionary atLevel: aLevel
+
+	self addCurrentName: (aDictionary at: self) toPrinter: externalPrinter atLevel: aLevel.
+	accounts do: [ :summarizingAccount |
+		summarizingAccount continuePrintingOn: externalPrinter namingAccountsWith: aDictionary atLevel: (aLevel + 1)
+	].! !
+
+!Portfolio methodsFor: 'transactions' stamp: 'KFG 5/17/2018 00:28:25'!
+printNamingAccountsWith: aDictionary
+	| printer |
+	
+	printer := OrderedCollection new.
+	printer add: (aDictionary at: self).
+
+	accounts do: [ :summarizingAccount |
+		summarizingAccount continuePrintingOn: printer namingAccountsWith: aDictionary atLevel: 1
+	].
+
+	^printer! !
 
 !Portfolio methodsFor: 'transactions' stamp: 'HAW 9/25/2017 19:40:20'!
 transactions 
@@ -929,6 +956,17 @@ accountSummary
 certificatesOfDeposit
 
 	^ certificatesOfDeposit copy! !
+
+!ReceptiveAccount methodsFor: 'transactions' stamp: 'KFG 5/17/2018 00:52:26'!
+continuePrintingOn: externalPrinter namingAccountsWith: aDictionary atLevel: aLevel
+
+	self addCurrentName: (aDictionary at: self) toPrinter: externalPrinter atLevel: aLevel.
+
+	"| accountNameAtCurrentLevel |
+	accountNameAtCurrentLevel := aDictionary at: self.
+	aLevel timesRepeat: [  accountNameAtCurrentLevel := accountNameAtCurrentLevel appendToString: ' ' ].
+	externalPrinter add: accountNameAtCurrentLevel.
+"! !
 
 !ReceptiveAccount methodsFor: 'transactions' stamp: 'KFG 5/14/2018 18:39:16'!
 register: aTransaction
@@ -1054,10 +1092,10 @@ affectBalance: anAccount
 
 	^self subclassResponsibility ! !
 
-!TransferTransaction methodsFor: 'as yet unclassified' stamp: 'KFG 5/14/2018 18:57:30'!
+!TransferTransaction methodsFor: 'as yet unclassified' stamp: 'KFG 5/16/2018 23:54:51'!
 description
 
-	^ 'Transferencia por {1}' format: {self valueForDescription ! !
+	^ 'Transferencia por {1}' format: {self valueForDescription} ! !
 
 !TransferTransaction methodsFor: 'as yet unclassified' stamp: 'KFG 5/13/2018 23:16:57'!
 initializeWithTransfer: aTransfer
