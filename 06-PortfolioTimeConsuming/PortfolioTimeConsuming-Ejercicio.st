@@ -627,20 +627,15 @@ initializeFor: aReceptiveAccount
 	
 	account := aReceptiveAccount ! !
 
-!AccountSummaryWithAllInvestmentInformation methodsFor: 'as yet unclassified' stamp: 'MM 5/20/2018 22:51:34'!
-lines 
-
-	| lines investmentEarnings earningsValue readySemaphore|
-	
-	readySemaphore := Semaphore new.
-	investmentEarnings := InvestmentNetVisitor for: account.
-	[earningsValue := investmentEarnings value.
-		readySemaphore signal] fork.
-	lines := (AccountSummaryWithInvestmentEarnings for: account) lines.
-	readySemaphore wait.
-	lines add: 'Inversiones por ', earningsValue printString.
-	
-	 ^ lines! !
+!AccountSummaryWithAllInvestmentInformation methodsFor: 'as yet unclassified' stamp: 'MM 5/21/2018 19:46:53'!
+lines
+	| lineDescription investmentEarnings summary |
+	investmentEarnings _ InvestmentNetVisitor for: account.
+	lineDescription _ 'Inversiones por '.
+	summary _ (AccountSummaryWithInvestmentEarnings for: account).
+	^ (AddLineToSummaryLines onSummary: summary)
+		calculateValueForking: investmentEarnings
+		andAddLine: lineDescription.! !
 
 "-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- "!
 
@@ -666,20 +661,15 @@ initializeFor: aReceptiveAccount
 	
 	account := aReceptiveAccount ! !
 
-!AccountSummaryWithInvestmentEarnings methodsFor: 'as yet unclassified' stamp: 'MM 5/20/2018 22:46:43'!
-lines 
-
-	| lines investmentEarnings earningsValue readySemaphore|
-	
-	investmentEarnings := InvestmentEarningVisitor for: account.
-	readySemaphore := Semaphore new.
-	[earningsValue := investmentEarnings value.
-		readySemaphore signal] fork.
-	lines := (AccountSummary for: account) lines.
-	readySemaphore wait.
-	lines add: 'Ganancias por ', earningsValue printString.
-	
-	 ^ lines! !
+!AccountSummaryWithInvestmentEarnings methodsFor: 'as yet unclassified' stamp: 'MM 5/21/2018 19:42:57'!
+lines
+	| investmentEarnings lineDescription summary |
+	investmentEarnings _ InvestmentEarningVisitor for: account.
+	lineDescription _ 'Ganancias por '.
+	summary _ (AccountSummary for: account).
+	^ (AddLineToSummaryLines onSummary: summary)
+		calculateValueForking: investmentEarnings
+		andAddLine: lineDescription.! !
 
 "-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- "!
 
@@ -1368,6 +1358,43 @@ for: aReceptiveAccount
 	^ self new initializeFor: aReceptiveAccount ! !
 
 
+!classDefinition: #AddLineToSummaryLines category: #'PortfolioTimeConsuming-Ejercicio'!
+Object subclass: #AddLineToSummaryLines
+	instanceVariableNames: 'summary'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'PortfolioTimeConsuming-Ejercicio'!
+
+!AddLineToSummaryLines methodsFor: 'as yet unclassified' stamp: 'MM 5/21/2018 19:45:41'!
+calculateValueForking: anInvestmentVisitor andAddLine: aLineDescription
+	
+	| earningsValue readySemaphore summaryLines |
+	readySemaphore := Semaphore new.
+	[earningsValue := anInvestmentVisitor value.
+		readySemaphore signal] fork.
+	summaryLines := summary lines.
+	readySemaphore wait.
+	summaryLines add: aLineDescription, earningsValue printString.
+	
+	 ^ summaryLines! !
+
+!AddLineToSummaryLines methodsFor: 'as yet unclassified' stamp: 'MM 5/21/2018 19:45:05'!
+initializeWithSummary: aSummary
+
+	summary := aSummary .! !
+
+"-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- "!
+
+!classDefinition: 'AddLineToSummaryLines class' category: #'PortfolioTimeConsuming-Ejercicio'!
+AddLineToSummaryLines class
+	instanceVariableNames: ''!
+
+!AddLineToSummaryLines class methodsFor: 'as yet unclassified' stamp: 'MM 5/21/2018 19:44:21'!
+onSummary: summary
+
+	 ^ self new initializeWithSummary: summary .! !
+
+
 !classDefinition: #SummarizingAccount category: #'PortfolioTimeConsuming-Ejercicio'!
 Object subclass: #SummarizingAccount
 	instanceVariableNames: ''
@@ -1635,7 +1662,6 @@ transactions
 transfers
 
 	^ transfers copy! !
-
 
 
 !ReceptiveAccount methodsFor: 'testing' stamp: 'KFG 5/14/2018 18:40:14'!
