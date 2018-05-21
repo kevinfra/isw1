@@ -121,6 +121,25 @@ test08PortfolioKnowsTransactionsRegisteredByItsManagedAccounts
 	self assert: (composedPortfolio registers: deposit2).
 	self assert: (composedPortfolio registers: deposit3).! !
 
+!PortfolioTest methodsFor: 'tests' stamp: 'HernanWilkinson 9/12/2011 13:25'!
+test08PortofolioKnowsTransactionsRegisteredByItsManagedAccounts 
+
+	| account1 account2 account3 complexPortfolio composedPortfolio deposit1 deposit2 deposit3 |
+	
+	account1 := ReceptiveAccount new.
+	account2 := ReceptiveAccount new.
+	account3 := ReceptiveAccount new.
+	complexPortfolio := Portfolio with: account1 with: account2.
+	composedPortfolio := Portfolio with: complexPortfolio with: account3.
+		
+	deposit1 := Deposit register: 100 on: account1.
+	deposit2 := Deposit register: 200 on: account2.
+	deposit3 := Deposit register: 300 on: account3.
+		
+ 	self assert: (composedPortfolio registers: deposit1).
+	self assert: (composedPortfolio registers: deposit2).
+	self assert: (composedPortfolio registers: deposit3).! !
+
 !PortfolioTest methodsFor: 'tests' stamp: 'HernanWilkinson 7/13/2011 19:00'!
 test10ReceptiveAccountManageItSelf 
 
@@ -300,6 +319,25 @@ test20_01CanNotCreatePortfoliosWithAccountsManagedByOtherManagedPortfolioTwo
         raise: Error
         withExceptionDo: [ :invalidPortfolio |
             self assert: Portfolio accountAlreadyManagedErrorMessage = invalidPortfolio messageText ] ! !
+
+!PortfolioTest methodsFor: 'tests' stamp: 'KFG 5/11/2018 20:02:25'!
+test21PortfolioWithAllAccountsActsLikePortfolioWithAccount1AndAccount2
+
+	| account1 account2 complexPortfolio complexPortfolioWithAllAccounts |
+	
+	account1 := ReceptiveAccount new.
+	account2 := ReceptiveAccount new.
+	complexPortfolio := Portfolio with: account1 with: account2.
+	complexPortfolioWithAllAccounts := Portfolio withAll: (OrderedCollection with: account1 with: account2).
+	 	
+	Deposit register: 100 on: account1.
+	Deposit register: 200 on: account2.
+		
+	self assert: complexPortfolioWithAllAccounts balance = complexPortfolio balance .
+	self assert: complexPortfolioWithAllAccounts transactions = complexPortfolio transactions .
+	self assert: (complexPortfolioWithAllAccounts manages: account1) = (complexPortfolio manages: account1) .
+	self assert: (complexPortfolioWithAllAccounts manages: account2) = (complexPortfolio manages: account2) .
+! !
 
 !PortfolioTest methodsFor: 'tests' stamp: 'HernanWilkinson 7/14/2011 05:27'!
 test21TransferShouldWithdrawFromFromAccountAndDepositIntoToAccount
@@ -589,14 +627,18 @@ initializeFor: aReceptiveAccount
 	
 	account := aReceptiveAccount ! !
 
-!AccountSummaryWithAllInvestmentInformation methodsFor: 'as yet unclassified' stamp: 'HernanWilkinson 7/17/2011 23:58'!
+!AccountSummaryWithAllInvestmentInformation methodsFor: 'as yet unclassified' stamp: 'MM 5/20/2018 22:51:34'!
 lines 
 
-	| lines investmentEarnings |
+	| lines investmentEarnings earningsValue readySemaphore|
 	
+	readySemaphore := Semaphore new.
 	investmentEarnings := InvestmentNetVisitor for: account.
+	[earningsValue := investmentEarnings value.
+		readySemaphore signal] fork.
 	lines := (AccountSummaryWithInvestmentEarnings for: account) lines.
-	lines add: 'Inversiones por ', investmentEarnings value printString.
+	readySemaphore wait.
+	lines add: 'Inversiones por ', earningsValue printString.
 	
 	 ^ lines! !
 
@@ -624,14 +666,18 @@ initializeFor: aReceptiveAccount
 	
 	account := aReceptiveAccount ! !
 
-!AccountSummaryWithInvestmentEarnings methodsFor: 'as yet unclassified' stamp: 'HernanWilkinson 7/17/2011 23:53'!
+!AccountSummaryWithInvestmentEarnings methodsFor: 'as yet unclassified' stamp: 'MM 5/20/2018 22:46:43'!
 lines 
 
-	| lines investmentEarnings |
+	| lines investmentEarnings earningsValue readySemaphore|
 	
 	investmentEarnings := InvestmentEarningVisitor for: account.
+	readySemaphore := Semaphore new.
+	[earningsValue := investmentEarnings value.
+		readySemaphore signal] fork.
 	lines := (AccountSummary for: account) lines.
-	lines add: 'Ganancias por ', investmentEarnings value printString.
+	readySemaphore wait.
+	lines add: 'Ganancias por ', earningsValue printString.
 	
 	 ^ lines! !
 
@@ -658,6 +704,11 @@ Object subclass: #AccountTransaction
 affectBalance: aBalance
 
 	self subclassResponsibility ! !
+
+!AccountTransaction methodsFor: 'evaluating' stamp: 'KFG 5/13/2018 23:53:20'!
+description
+
+	^ self subclassResponsibility ! !
 
 !AccountTransaction methodsFor: 'evaluating' stamp: 'HernanWilkinson 7/14/2011 06:48'!
 value
@@ -687,6 +738,30 @@ AccountTransaction subclass: #CertificateOfDeposit
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'PortfolioTimeConsuming-Ejercicio'!
+
+!CertificateOfDeposit methodsFor: 'as yet unclassified' stamp: 'KFG 5/14/2018 19:01:18'!
+affectBalance: anAccount
+
+	anAccount substractFromBalance: value! !
+
+!CertificateOfDeposit methodsFor: 'as yet unclassified' stamp: 'KFG 5/16/2018 00:19:31'!
+description
+	| format |
+	format := Array with: value with: numberOfDays with: tna*100.
+	^'Plazo fijo por {1} durante {2} dias a una tna de {3}%' format: format! !
+
+!CertificateOfDeposit methodsFor: 'as yet unclassified' stamp: 'KFG 5/14/2018 17:50:50'!
+duration
+	^numberOfDays ! !
+
+!CertificateOfDeposit methodsFor: 'as yet unclassified' stamp: 'KFG 5/16/2018 00:10:36'!
+initializeWith: aValue during: days at: aRate on: aReceptiveAccount 
+
+	value := aValue .
+	tna := aRate .
+	numberOfDays := days .
+	account := aReceptiveAccount .! !
+
 
 !CertificateOfDeposit methodsFor: 'accessing' stamp: 'HernanWilkinson 7/14/2011 06:23'!
 days
@@ -752,16 +827,21 @@ AccountTransaction subclass: #Deposit
 	poolDictionaries: ''
 	category: 'PortfolioTimeConsuming-Ejercicio'!
 
-!Deposit methodsFor: 'value' stamp: 'HernanWilkinson 7/13/2011 18:38'!
-value
-
-	^ value! !
-
-
 !Deposit methodsFor: 'initialization' stamp: 'HernanWilkinson 7/13/2011 18:45'!
 initializeFor: aValue
 
 	value := aValue ! !
+
+
+!Deposit methodsFor: 'value' stamp: 'KFG 5/13/2018 23:53:09'!
+description
+
+	^ 'Deposito por {1}' format: {self value} ! !
+
+!Deposit methodsFor: 'value' stamp: 'HernanWilkinson 7/13/2011 18:38'!
+value
+
+	^ value! !
 
 
 !Deposit methodsFor: 'balance' stamp: 'HernanWilkinson 9/6/2016 19:49'!
@@ -803,6 +883,12 @@ AccountTransaction subclass: #TransferDeposit
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'PortfolioTimeConsuming-Ejercicio'!
+
+!TransferDeposit methodsFor: 'as yet unclassified' stamp: 'KFG 5/14/2018 18:58:08'!
+valueForDescription
+	
+	^self value! !
+
 
 !TransferDeposit methodsFor: 'balance' stamp: 'HernanWilkinson 9/6/2016 19:50'!
 affectBalance: aBalance
@@ -852,6 +938,17 @@ AccountTransaction subclass: #TransferWithdraw
 	poolDictionaries: ''
 	category: 'PortfolioTimeConsuming-Ejercicio'!
 
+!TransferWithdraw methodsFor: 'as yet unclassified' stamp: 'HernanWilkinson 9/6/2016 19:50'!
+affectBalance: aBalance
+
+	^aBalance - self value! !
+
+!TransferWithdraw methodsFor: 'as yet unclassified' stamp: 'KFG 5/14/2018 18:58:24'!
+valueForDescription
+
+	^0 - self value! !
+
+
 !TransferWithdraw methodsFor: 'initialization' stamp: 'HernanWilkinson 7/14/2011 05:53'!
 initializeOf: aTransfer
 
@@ -862,12 +959,6 @@ initializeOf: aTransfer
 value 
 
 	^ transfer value! !
-
-
-!TransferWithdraw methodsFor: 'as yet unclassified' stamp: 'HernanWilkinson 9/6/2016 19:50'!
-affectBalance: aBalance
-
-	^aBalance - self value! !
 
 
 !TransferWithdraw methodsFor: 'visiting' stamp: 'HernanWilkinson 7/14/2011 06:53'!
@@ -900,6 +991,17 @@ AccountTransaction subclass: #Withdraw
 	poolDictionaries: ''
 	category: 'PortfolioTimeConsuming-Ejercicio'!
 
+!Withdraw methodsFor: 'initialization' stamp: 'HernanWilkinson 7/13/2011 18:46'!
+initializeFor: aValue
+
+	value := aValue ! !
+
+
+!Withdraw methodsFor: 'value' stamp: 'KFG 5/13/2018 23:51:26'!
+description
+
+	^ 'Extraccion por {1}' format: {self value} ! !
+
 !Withdraw methodsFor: 'value' stamp: 'HernanWilkinson 7/14/2011 05:54'!
 value
 
@@ -910,12 +1012,6 @@ value
 affectBalance: aBalance
 
 	^aBalance - value! !
-
-
-!Withdraw methodsFor: 'initialization' stamp: 'HernanWilkinson 7/13/2011 18:46'!
-initializeFor: aValue
-
-	value := aValue ! !
 
 
 !Withdraw methodsFor: 'visiting' stamp: 'HernanWilkinson 7/14/2011 06:55'!
@@ -1290,6 +1386,14 @@ registers: aTransaction
 	self subclassResponsibility ! !
 
 
+!SummarizingAccount methodsFor: 'transactions' stamp: 'KFG 5/17/2018 00:51:17'!
+addCurrentName: name toPrinter: externalPrinter atLevel: aLevel
+
+	| nameAtCurrentLevel |
+	nameAtCurrentLevel := name.
+	aLevel timesRepeat: [  nameAtCurrentLevel := nameAtCurrentLevel appendToString: ' ' ].
+	externalPrinter add: nameAtCurrentLevel.! !
+
 !SummarizingAccount methodsFor: 'transactions' stamp: 'HernanWilkinson 7/13/2011 18:34'!
 balance
 
@@ -1319,6 +1423,21 @@ anyManagedAccountManages: anAccount
 
 	^accounts anySatisfy: [ :managedAccount | (managedAccount manages: anAccount) or: [ anAccount manages: managedAccount ] ] ! !
 
+!Portfolio methodsFor: 'testing' stamp: 'KFG 5/10/2018 23:05:35'!
+initializeWithAllAccounts: aCollectionOfAccounts
+		
+	aCollectionOfAccounts withIndexDo: [ :account :index | 
+		aCollectionOfAccounts withIndexDo: [ :anotherAccount :anotherIndex | 
+			(index ~= anotherIndex and: (account manages: anotherAccount)) ifTrue: [
+				self error: self class accountAlreadyManagedErrorMessage
+			]
+		]
+	].
+
+	accounts := aCollectionOfAccounts .
+	
+	^self! !
+
 !Portfolio methodsFor: 'testing' stamp: 'HAW 5/8/2018 16:49:05'!
 manages: anAccount
 
@@ -1330,17 +1449,32 @@ registers: aTransaction
 	^ accounts anySatisfy: [ :anAccount | anAccount registers: aTransaction ]  ! !
 
 
-!Portfolio methodsFor: 'initialization' stamp: 'HernanWilkinson 7/13/2011 19:19'!
-initializeWithAll: aCollectionOfAccounts
-
-	accounts := aCollectionOfAccounts   ! !
-
-
 !Portfolio methodsFor: 'transactions' stamp: 'HernanWilkinson 7/13/2011 19:20'!
 balance
 
 	^ accounts inject: 0 into: [ :balance :account | balance + account balance ]
 ! !
+
+!Portfolio methodsFor: 'transactions' stamp: 'KFG 5/17/2018 00:49:56'!
+continuePrintingOn: externalPrinter namingAccountsWith: aDictionary atLevel: aLevel
+
+	self addCurrentName: (aDictionary at: self) toPrinter: externalPrinter atLevel: aLevel.
+	accounts do: [ :summarizingAccount |
+		summarizingAccount continuePrintingOn: externalPrinter namingAccountsWith: aDictionary atLevel: (aLevel + 1)
+	].! !
+
+!Portfolio methodsFor: 'transactions' stamp: 'KFG 5/17/2018 00:28:25'!
+printNamingAccountsWith: aDictionary
+	| printer |
+	
+	printer := OrderedCollection new.
+	printer add: (aDictionary at: self).
+
+	accounts do: [ :summarizingAccount |
+		summarizingAccount continuePrintingOn: printer namingAccountsWith: aDictionary atLevel: 1
+	].
+
+	^printer! !
 
 !Portfolio methodsFor: 'transactions' stamp: 'HernanWilkinson 7/13/2011 19:23'!
 transactions 
@@ -1355,6 +1489,12 @@ transactionsOf: anAccount
 		ifTrue: [ anAccount transactions ] 
 		ifFalse: [ self error: self class accountNotManagedMessageDescription]
 	! !
+
+
+!Portfolio methodsFor: 'initialization' stamp: 'HernanWilkinson 7/13/2011 19:19'!
+initializeWithAll: aCollectionOfAccounts
+
+	accounts := aCollectionOfAccounts   ! !
 
 
 !Portfolio methodsFor: 'visiting' stamp: 'HernanWilkinson 7/14/2011 06:36'!
@@ -1373,6 +1513,19 @@ accept: aSummarizingAccountVisitor
 !classDefinition: 'Portfolio class' category: #'PortfolioTimeConsuming-Ejercicio'!
 Portfolio class
 	instanceVariableNames: ''!
+
+!Portfolio class methodsFor: 'instance creation' stamp: 'HAW 5/8/2018 16:48:08'!
+with: leftAccount with: rightAccount
+
+	^ self withAll: (Array with: leftAccount with: rightAccount)! !
+
+!Portfolio class methodsFor: 'instance creation' stamp: 'HAW 5/8/2018 16:48:32'!
+withAll: aCollectionOfAccounts
+
+	self checkCreationPreconditions: aCollectionOfAccounts.
+	
+	^self new initializeWithAll: aCollectionOfAccounts ! !
+
 
 !Portfolio class methodsFor: 'assertions' stamp: 'HernanWilkinson 9/18/2011 17:22'!
 check: sourceAccount doesNotManagaAnyOf: aCollectionOfAccounts
@@ -1409,19 +1562,6 @@ accountNotManagedMessageDescription
 	
 	^ 'Account not managed'! !
 
-
-!Portfolio class methodsFor: 'instance creation' stamp: 'HAW 5/8/2018 16:48:08'!
-with: leftAccount with: rightAccount
-
-	^ self withAll: (Array with: leftAccount with: rightAccount)! !
-
-!Portfolio class methodsFor: 'instance creation' stamp: 'HAW 5/8/2018 16:48:32'!
-withAll: aCollectionOfAccounts
-
-	self checkCreationPreconditions: aCollectionOfAccounts.
-	
-	^self new initializeWithAll: aCollectionOfAccounts ! !
-
 
 !classDefinition: #ReceptiveAccount category: #'PortfolioTimeConsuming-Ejercicio'!
 SummarizingAccount subclass: #ReceptiveAccount
@@ -1437,6 +1577,72 @@ initialize
 	transactions := OrderedCollection new.! !
 
 
+!ReceptiveAccount methodsFor: 'transactions' stamp: 'KFG 5/13/2018 23:47:07'!
+accountSummary
+
+	^ transactions collect: [ :transaction | transaction description ]! !
+
+!ReceptiveAccount methodsFor: 'transactions' stamp: 'HernanWilkinson 7/14/2011 05:57'!
+balance
+
+	^ (BalanceVisitor of: self) value
+! !
+
+!ReceptiveAccount methodsFor: 'transactions' stamp: 'KFG 5/14/2018 17:45:30'!
+certificatesOfDeposit
+
+	^ certificatesOfDeposit copy! !
+
+!ReceptiveAccount methodsFor: 'transactions' stamp: 'KFG 5/17/2018 00:52:26'!
+continuePrintingOn: externalPrinter namingAccountsWith: aDictionary atLevel: aLevel
+
+	self addCurrentName: (aDictionary at: self) toPrinter: externalPrinter atLevel: aLevel.
+
+	"| accountNameAtCurrentLevel |
+	accountNameAtCurrentLevel := aDictionary at: self.
+	aLevel timesRepeat: [  accountNameAtCurrentLevel := accountNameAtCurrentLevel appendToString: ' ' ].
+	externalPrinter add: accountNameAtCurrentLevel.
+"! !
+
+!ReceptiveAccount methodsFor: 'transactions' stamp: 'HernanWilkinson 7/13/2011 18:37'!
+register: aTransaction
+
+	transactions add: aTransaction 
+! !
+
+!ReceptiveAccount methodsFor: 'transactions' stamp: 'KFG 5/14/2018 19:02:04'!
+registerCertificate: aCertificateOfDeposit
+
+	transactions add: aCertificateOfDeposit .
+	certificatesOfDeposit add: aCertificateOfDeposit .
+	aCertificateOfDeposit affectBalance: self
+! !
+
+!ReceptiveAccount methodsFor: 'transactions' stamp: 'KFG 5/14/2018 18:50:08'!
+registerTransfer: aTransfer
+
+	transactions add: aTransfer .
+	transfers add: aTransfer .
+	aTransfer affectBalance: self
+! !
+
+!ReceptiveAccount methodsFor: 'transactions' stamp: 'HernanWilkinson 7/13/2011 18:37'!
+transactions 
+
+	^ transactions copy! !
+
+!ReceptiveAccount methodsFor: 'transactions' stamp: 'KFG 5/14/2018 17:26:12'!
+transfers
+
+	^ transfers copy! !
+
+
+
+!ReceptiveAccount methodsFor: 'testing' stamp: 'KFG 5/14/2018 18:40:14'!
+addToBalance: aValue
+
+	balance := balance + aValue.! !
+
 !ReceptiveAccount methodsFor: 'testing' stamp: 'HernanWilkinson 7/13/2011 18:37'!
 manages: anAccount
 
@@ -1449,23 +1655,10 @@ registers: aTtransaction
 	^ transactions includes: aTtransaction 
 ! !
 
+!ReceptiveAccount methodsFor: 'testing' stamp: 'KFG 5/14/2018 18:41:02'!
+substractFromBalance: aValue
 
-!ReceptiveAccount methodsFor: 'transactions' stamp: 'HernanWilkinson 7/14/2011 05:57'!
-balance
-
-	^ (BalanceVisitor of: self) value
-! !
-
-!ReceptiveAccount methodsFor: 'transactions' stamp: 'HernanWilkinson 7/13/2011 18:37'!
-register: aTransaction
-
-	transactions add: aTransaction 
-! !
-
-!ReceptiveAccount methodsFor: 'transactions' stamp: 'HernanWilkinson 7/13/2011 18:37'!
-transactions 
-
-	^ transactions copy! !
+	balance := balance - aValue.! !
 
 
 !ReceptiveAccount methodsFor: 'visiting' stamp: 'HernanWilkinson 7/14/2011 06:52'!
@@ -1589,6 +1782,17 @@ Object subclass: #Transfer
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'PortfolioTimeConsuming-Ejercicio'!
+
+!Transfer methodsFor: 'as yet unclassified' stamp: 'KFG 5/13/2018 23:28:13'!
+receiverAccount
+
+	^ to! !
+
+!Transfer methodsFor: 'as yet unclassified' stamp: 'KFG 5/13/2018 23:27:57'!
+sourceAccount
+
+	^ from! !
+
 
 !Transfer methodsFor: 'value' stamp: 'HernanWilkinson 7/14/2011 05:55'!
 value
