@@ -5,6 +5,14 @@ TestCase subclass: #TicTacToeTest
 	poolDictionaries: ''
 	category: 'TicTacToStep21'!
 
+!TicTacToeTest methodsFor: 'as yet unclassified' stamp: 'KFG 5/28/2018 17:49:33'!
+assertPlayerPlays: aCollectionOfPlays expectsToOnlyHave: anExpectedCollectionOfPlays
+
+	self assert: aCollectionOfPlays size equals: anExpectedCollectionOfPlays size.
+	anExpectedCollectionOfPlays do: [ :aPlay |
+		self assert: (aCollectionOfPlays includes: aPlay)
+	].! !
+
 !TicTacToeTest methodsFor: 'as yet unclassified' stamp: 'jg 5/22/2018 09:59:04'!
 test01
 
@@ -16,7 +24,7 @@ test01
 	self assert: game Os isEmpty.
 	! !
 
-!TicTacToeTest methodsFor: 'as yet unclassified' stamp: 'jg 5/22/2018 10:20:33'!
+!TicTacToeTest methodsFor: 'as yet unclassified' stamp: 'KFG 5/28/2018 17:53:21'!
 test02
 
 	|game|
@@ -25,13 +33,12 @@ test02
 
 	game putXAt: 1@1.
 	
-	self assert: 1 equals: game Xs size.
-	self assert: (game Xs includes: 1@1).
+	self assertPlayerPlays: game Xs expectsToOnlyHave: (OrderedCollection with: (1@1)).
 	self assert: game Os isEmpty.
 	
 	! !
 
-!TicTacToeTest methodsFor: 'as yet unclassified' stamp: 'jg 5/22/2018 10:50:55'!
+!TicTacToeTest methodsFor: 'as yet unclassified' stamp: 'KFG 5/28/2018 17:52:42'!
 test03
 
 	|game|
@@ -41,10 +48,8 @@ test03
 	game putXAt: 1@1.
 	game putOAt: 2@2.
 	
-	self assert: 1 equals: game Xs size.
-	self assert: (game Xs includes: 1@1).
-	self assert: 1 equals: game Os size.
-	self assert: (game Os includes: 2@2).
+	self assertPlayerPlays: game Xs expectsToOnlyHave: (OrderedCollection with: (1@1)).
+	self assertPlayerPlays: game Os expectsToOnlyHave: (OrderedCollection with: (2@2)).
 	! !
 
 !TicTacToeTest methodsFor: 'as yet unclassified' stamp: 'jg 5/22/2018 11:01:26'!
