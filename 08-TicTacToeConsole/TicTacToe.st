@@ -1353,15 +1353,34 @@ initializePrintingOn: aStream
 	self initializeBoard ! !
 
 
-!TicTacToeView methodsFor: 'printing' stamp: 'MM 6/4/2018 15:43:40'!
+!TicTacToeView methodsFor: 'printing' stamp: 'MM 6/4/2018 16:47:48'!
 oPlayedAt: aPosition 
 	board at: aPosition put: 'O'! !
+
+!TicTacToeView methodsFor: 'printing' stamp: 'MM 6/4/2018 17:04:47'!
+printBoard
+	| printedBoard line |
+	line := '-----'.
+	printedBoard := '|'.
+	(1 to: 3) do: [ :row | 
+		(1 to: 3) do: [ :col |
+			printedBoard := printedBoard , (board i: row j: col).
+			printedBoard := printedBoard , '|'.
+		].
+		row = 3 ifFalse: [
+		printedBoard := printedBoard , '
+'.
+		printedBoard := printedBoard , line.
+		printedBoard := printedBoard , '
+|'.].
+	].
+	printedBoard printOn: output ! !
 
 !TicTacToeView methodsFor: 'printing' stamp: 'MM 6/4/2018 15:19:07'!
 stateUpdatedTo: aTicTacToeState
 	(aTicTacToeState printOn: 'Estado: ') printOn: output.! !
 
-!TicTacToeView methodsFor: 'printing' stamp: 'MM 6/4/2018 15:40:41'!
+!TicTacToeView methodsFor: 'printing' stamp: 'MM 6/4/2018 16:47:52'!
 xPlayedAt: aPosition 
 	board at: aPosition put: 'X'! !
 
