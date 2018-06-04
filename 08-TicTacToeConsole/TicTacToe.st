@@ -315,7 +315,7 @@ test27TicTacToeAcceptsAObserver
 	
 	self assert: testObserver notifications isEmpty! !
 
-!TicTacToeTest methodsFor: 'testing' stamp: 'MM 6/2/2018 21:10:21'!
+!TicTacToeTest methodsFor: 'testing' stamp: 'KFG 6/4/2018 01:34:16'!
 test28WhenXPlaysAnObserverIsNotified
 
 	| testObserver |
@@ -325,11 +325,9 @@ test28WhenXPlaysAnObserverIsNotified
 	
 	game markAll: {2@2}.
 	
-	self assert: 2 equals: testObserver notifications size.
-	self assert: (testObserver notifications at: 1) equals: 'X marcó en 2@2'.
-	self assert: (testObserver notifications at: 2) equals: 'Estado: Jugando O'.! !
+	self notificationsEquals: {'X marcó en 2@2'.'Estado: Jugando O'.} onObserver: testObserver .! !
 
-!TicTacToeTest methodsFor: 'testing' stamp: 'MM 6/3/2018 18:48:46'!
+!TicTacToeTest methodsFor: 'testing' stamp: 'KFG 6/4/2018 01:33:42'!
 test29WhenOPlaysAnObserverIsNotified
 
 	| testObserver |
@@ -339,11 +337,111 @@ test29WhenOPlaysAnObserverIsNotified
 	
 	game markAll: {2@2. 1@1}.
 	
-	self assert: 4 equals: testObserver notifications size.
-	self assert: (testObserver notifications at: 1) equals: 'X marcó en 2@2'.
-	self assert: (testObserver notifications at: 2) equals: 'Estado: Jugando O'.
-	self assert: (testObserver notifications at: 3) equals: 'O marcó en 1@1'.
-	self assert: (testObserver notifications at: 4) equals: 'Estado: Jugando X'.! !
+	self 
+		notificationsEquals: {'X marcó en 2@2'. 'Estado: Jugando O'. 'O marcó en 1@1'. 'Estado: Jugando X'.} 
+		onObserver: testObserver .! !
+
+!TicTacToeTest methodsFor: 'testing' stamp: 'KFG 6/4/2018 01:32:33'!
+test30ObserverIsNotNotifiedWhenAnErrorIsRaised
+
+	| testObserver |
+	game _ TicTacToe new.
+	testObserver := TestObserver new.
+	game addObserver: testObserver.
+	
+	game markAll: {1@1}.
+	
+	self
+		should: [ game markWithXAt: 2 @ 2 ]
+		raise: self functionalException
+		withExceptionDo: [ :anError |
+			self assert: TicTacToe notXTurnErrorMessage equals: anError messageText.
+			self assertXIsMarkedOn: {1@1} andOOn: {}.
+			self notificationsEquals: {  'X marcó en 1@1'. 'Estado: Jugando O'. } onObserver: testObserver. ]! !
+
+!TicTacToeTest methodsFor: 'testing' stamp: 'KFG 6/4/2018 01:31:04'!
+test31ObserverShowsXWonAfterXWins
+
+	| testObserver |
+	game _ TicTacToe new.
+	testObserver := TestObserver new.
+	game addObserver: testObserver.
+	
+	game markAll: {1@1. 2@1. 1@2. 3@1. 1@3 }.
+	
+	self assertXWon.
+	self notificationsEquals: {
+		'X marcó en 1@1'.
+		'Estado: Jugando O'.
+		'O marcó en 2@1'.
+		'Estado: Jugando X'.
+		'X marcó en 1@2'.
+		'Estado: Jugando O'.
+		'O marcó en 3@1'.
+		'Estado: Jugando X'.
+		'X marcó en 1@3'.
+		'Estado: Juego terminado - Ganó X!!'.
+	}
+	onObserver: testObserver.! !
+
+!TicTacToeTest methodsFor: 'testing' stamp: 'KFG 6/4/2018 01:26:13'!
+test32ObserverShowsOWonAfterOWins
+
+	| testObserver |
+	game _ TicTacToe new.
+	testObserver := TestObserver new.
+	game addObserver: testObserver.
+	
+	game markAll: {2@1. 1@1. 2@2. 1@2. 3@1. 1@3 }.
+
+	self assertOWon.
+	self notificationsEquals: {
+		'X marcó en 2@1'.
+		'Estado: Jugando O'.
+		'O marcó en 1@1'.
+		'Estado: Jugando X'.
+		'X marcó en 2@2'.
+		'Estado: Jugando O'.
+		'O marcó en 1@2'.
+		'Estado: Jugando X'.
+		'X marcó en 3@1'.
+		'Estado: Jugando O'.
+		'O marcó en 1@3'.
+		'Estado: Juego terminado - Ganó O!!'.
+	}
+	onObserver: testObserver .! !
+
+!TicTacToeTest methodsFor: 'testing' stamp: 'KFG 6/4/2018 01:24:00'!
+test33ObserverShowsGameIsTiedAfterPlayersTie
+
+	| testObserver |
+	game _ TicTacToe new.
+	testObserver := TestObserver new.
+	game addObserver: testObserver.
+	
+	game markAll: { 2@2. 1@1. 1@3. 3@1. 2@1. 2@3. 1@2. 3@2. 3@3 }.
+
+	self assertGameIsTied.
+	self notificationsEquals: { 
+		'X marcó en 2@2'. 
+		'Estado: Jugando O'.
+		'O marcó en 1@1'.
+		'Estado: Jugando X'.
+		'X marcó en 1@3'.
+		'Estado: Jugando O'.
+		'O marcó en 3@1'.
+		'Estado: Jugando X'.
+		'X marcó en 2@1'.
+		'Estado: Jugando O'.
+		'O marcó en 2@3'.
+		'Estado: Jugando X'.
+		'X marcó en 1@2'.
+		'Estado: Jugando O'.
+		'O marcó en 3@2'.
+		'Estado: Jugando X'.
+		'X marcó en 3@3'.
+		'Estado: Juego terminado - Empate'
+	} onObserver: testObserver! !
 
 
 !TicTacToeTest methodsFor: 'assertions' stamp: 'HAW 10/27/2017 10:29:06'!
@@ -448,6 +546,14 @@ assertXWon
 	self deny: game isTied.
 ! !
 
+!TicTacToeTest methodsFor: 'assertions' stamp: 'KFG 6/4/2018 01:23:19'!
+notificationsEquals: notifications onObserver: anObserver
+
+	self assert: notifications size equals: anObserver notifications size.
+	notifications withIndexDo: [ :notification :index |
+		self assert: notification equals: (anObserver notifications at: index)
+	]! !
+
 
 !classDefinition: #TestObserver category: #TicTacToe!
 Object subclass: #TestObserver
@@ -468,6 +574,14 @@ notifications
 !TestObserver methodsFor: 'events-registering' stamp: 'MM 6/2/2018 21:04:00'!
 oIsPlaying
 	notifications add: 'Estado: Jugando O'.! !
+
+!TestObserver methodsFor: 'events-registering' stamp: 'KFG 6/4/2018 00:56:08'!
+oPlayedAt: aPosition 
+	notifications add: ('O marcó en ' append: aPosition asString )! !
+
+!TestObserver methodsFor: 'events-registering' stamp: 'KFG 6/4/2018 00:49:05'!
+stateUpdatedTo: aTicTacToeState
+	notifications add: (aTicTacToeState printOn: 'Estado: ').! !
 
 !TestObserver methodsFor: 'events-registering' stamp: 'MM 6/3/2018 19:09:14'!
 xIsPlaying
@@ -518,11 +632,11 @@ markWithXAt: aPosition
 	state markWithXAt: aPosition.! !
 
 
-!TicTacToe methodsFor: 'marking board - private' stamp: 'MM 6/2/2018 20:53:51'!
+!TicTacToe methodsFor: 'marking board - private' stamp: 'KFG 6/4/2018 00:29:32'!
 add: aPosition to: positions nextPlayerState: nextPlayingState winnerState: winnerState
 
 	positions add: aPosition.
-	state := ((self stateAfterAddingTo: positions with: nextPlayingState and: winnerState) for: self) notify	! !
+	state := (self stateAfterAddingTo: positions with: nextPlayingState and: winnerState) for: self.! !
 
 !TicTacToe methodsFor: 'marking board - private' stamp: 'HAW 10/25/2017 15:35:08'!
 assertIsFree: aPosition
@@ -535,14 +649,16 @@ assertIsInBoardBounds: aPosition
 
 	(aPosition between: 1@1 and: 3@3) ifFalse: [ self error: self class positionOutsideBoardErrorMessage ]! !
 
-!TicTacToe methodsFor: 'marking board - private' stamp: 'JG 5/12/2018 12:34:04'!
+!TicTacToe methodsFor: 'marking board - private' stamp: 'KFG 6/4/2018 00:55:31'!
 markWithOWhenPlayingOAt: aPosition
 	self assertIsFree: aPosition.
 	self
 		add: aPosition
 		to: playerOPositions
 		nextPlayerState: PlayingX
-		winnerState: PlayerOWon.! !
+		winnerState: PlayerOWon.
+	observer notifyOPlayedAt: aPosition.
+	observer notifyStateUpdate: state! !
 
 !TicTacToe methodsFor: 'marking board - private' stamp: 'HAW 10/26/2017 12:30:01'!
 markWithOWhenPlayingXAt: aPosition
@@ -552,15 +668,16 @@ markWithOWhenPlayingXAt: aPosition
 markWithXWhenPlayingOAt: aPoint
 	self error: self class notXTurnErrorMessage.! !
 
-!TicTacToe methodsFor: 'marking board - private' stamp: 'MM 6/2/2018 21:09:59'!
+!TicTacToe methodsFor: 'marking board - private' stamp: 'KFG 6/4/2018 00:50:09'!
 markWithXWhenPlayingXAt: aPosition
 	self assertIsFree: aPosition.
-	observer notifyXPlayedAt: aPosition.
 	self
 		add: aPosition
 		to: playerXPositions
 		nextPlayerState: PlayingO
 		winnerState: PlayerXWon.
+	observer notifyXPlayedAt: aPosition.
+	observer notifyStateUpdate: state
 ! !
 
 !TicTacToe methodsFor: 'marking board - private' stamp: 'HAW 10/26/2017 12:44:57'!
@@ -733,6 +850,14 @@ initialize
 notifyOIsPlaying
 	concreteObservers do: [ :aConcreteObserver | aConcreteObserver oIsPlaying]! !
 
+!TicTacToeObserver methodsFor: 'events-triggering' stamp: 'KFG 6/4/2018 00:55:55'!
+notifyOPlayedAt: aPosition
+	concreteObservers do: [ :aConcreteObserver | aConcreteObserver oPlayedAt: aPosition ]! !
+
+!TicTacToeObserver methodsFor: 'events-triggering' stamp: 'KFG 6/4/2018 00:48:47'!
+notifyStateUpdate: aTicTacToeState
+	concreteObservers do: [ :aConcreteObserver | aConcreteObserver stateUpdatedTo: aTicTacToeState ]! !
+
 !TicTacToeObserver methodsFor: 'events-triggering' stamp: 'MM 6/3/2018 19:08:08'!
 notifyXIsPlaying
 	concreteObservers do: [ :aConcreteObserver | aConcreteObserver xIsPlaying]! !
@@ -794,17 +919,17 @@ markWithOAt: aPosition
 markWithXAt: aPosition
 	self subclassResponsibility.! !
 
+!TicTacToeState methodsFor: 'marking board' stamp: 'KFG 6/4/2018 00:41:35'!
+printOn: aStream
+
+	self subclassResponsibility ! !
+
 
 !TicTacToeState methodsFor: 'initialization' stamp: 'MM 6/2/2018 20:52:51'!
 initializeFor: aGame
 
 	game := aGame! !
 
-
-!TicTacToeState methodsFor: 'events-triggering' stamp: 'MM 6/2/2018 20:54:10'!
-notify
-
-	self subclassResponsibility ! !
 
 "-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- "!
 
@@ -855,6 +980,11 @@ markWithOAt: aPosition
 markWithXAt: aPosition
 	game error: game class canNotPlayWhenGameIsOverErrorMessage.! !
 
+!GameOverState methodsFor: 'marking board' stamp: 'KFG 6/4/2018 01:07:41'!
+printOn: aStream
+	
+	^aStream append: 'Juego terminado'! !
+
 
 !classDefinition: #GameTied category: #TicTacToe!
 GameOverState subclass: #GameTied
@@ -875,6 +1005,11 @@ hasPlayerXWon
 isTied
 	
 	^true! !
+
+!GameTied methodsFor: 'testing game result' stamp: 'KFG 6/4/2018 01:16:53'!
+printOn: aStream
+	
+	^(super printOn: aStream) append: ' - Empate'! !
 
 
 !classDefinition: #PlayerOWon category: #TicTacToe!
@@ -897,6 +1032,11 @@ isTied
 	
 	^false! !
 
+!PlayerOWon methodsFor: 'testing game result' stamp: 'KFG 6/4/2018 01:12:02'!
+printOn: aStream
+	
+	^(super printOn: aStream) append: ' - Ganó O!!'! !
+
 
 !classDefinition: #PlayerXWon category: #TicTacToe!
 GameOverState subclass: #PlayerXWon
@@ -917,6 +1057,11 @@ hasPlayerXWon
 isTied
 	
 	^false! !
+
+!PlayerXWon methodsFor: 'testing game result' stamp: 'KFG 6/4/2018 01:06:44'!
+printOn: aStream
+	
+	^(super printOn: aStream) append: ' - Ganó X!!'! !
 
 
 !classDefinition: #PlayingState category: #TicTacToe!
@@ -977,9 +1122,11 @@ markWithXAt: aPosition
 	game markWithXWhenPlayingOAt: aPosition.! !
 
 
-!PlayingO methodsFor: 'events-triggering' stamp: 'MM 6/2/2018 20:58:15'!
-notify
-	game notifyOIsPlaying.! !
+
+!PlayingO methodsFor: 'printing' stamp: 'KFG 6/4/2018 00:46:30'!
+printOn: aStream
+
+	^aStream append: 'Jugando O'! !
 
 
 !classDefinition: #PlayingX category: #TicTacToe!
@@ -1014,6 +1161,8 @@ markWithXAt: aPosition
 	game markWithXWhenPlayingXAt: aPosition.! !
 
 
-!PlayingX methodsFor: 'events-triggering' stamp: 'MM 6/3/2018 18:53:05'!
-notify
-	game notifyXIsPlaying ! !
+
+!PlayingX methodsFor: 'printing' stamp: 'KFG 6/4/2018 00:45:14'!
+printOn: aStream
+
+	^aStream append: 'Jugando X'! !
