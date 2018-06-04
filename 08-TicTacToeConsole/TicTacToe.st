@@ -1353,36 +1353,54 @@ initializePrintingOn: aStream
 	self initializeBoard ! !
 
 
-!TicTacToeView methodsFor: 'printing' stamp: 'MM 6/4/2018 16:47:48'!
+!TicTacToeView methodsFor: 'printing' stamp: 'MM 6/4/2018 17:22:49'!
 oPlayedAt: aPosition 
-	board at: aPosition put: 'O'! !
+	board at: aPosition put: 'O'.
+	self printOPlaysAt: aPosition.! !
 
-!TicTacToeView methodsFor: 'printing' stamp: 'MM 6/4/2018 17:04:47'!
+!TicTacToeView methodsFor: 'printing' stamp: 'MM 6/4/2018 17:13:43'!
 printBoard
 	| printedBoard line |
 	line := '-----'.
-	printedBoard := '|'.
+	printedBoard := 'Vista:
+'.
 	(1 to: 3) do: [ :row | 
 		(1 to: 3) do: [ :col |
 			printedBoard := printedBoard , (board i: row j: col).
-			printedBoard := printedBoard , '|'.
+			col = 3 ifFalse: [
+				printedBoard := printedBoard , '|'.
+			].
 		].
 		row = 3 ifFalse: [
+			printedBoard := printedBoard , '
+'.
+			printedBoard := printedBoard , line.
+		].
 		printedBoard := printedBoard , '
 '.
-		printedBoard := printedBoard , line.
-		printedBoard := printedBoard , '
-|'.].
 	].
 	printedBoard printOn: output ! !
+
+!TicTacToeView methodsFor: 'printing' stamp: 'MM 6/4/2018 17:22:02'!
+printOPlaysAt: aPosition
+	(('Acciones:
+ticTacToe markWithOAt: ' append:  aPosition asString) append: '
+') printOn: output ! !
+
+!TicTacToeView methodsFor: 'printing' stamp: 'MM 6/4/2018 17:21:50'!
+printXPlaysAt: aPosition
+	(('Acciones:
+ticTacToe markWithXAt: ' append:  aPosition asString) append: '
+') printOn: output ! !
 
 !TicTacToeView methodsFor: 'printing' stamp: 'MM 6/4/2018 15:19:07'!
 stateUpdatedTo: aTicTacToeState
 	(aTicTacToeState printOn: 'Estado: ') printOn: output.! !
 
-!TicTacToeView methodsFor: 'printing' stamp: 'MM 6/4/2018 16:47:52'!
+!TicTacToeView methodsFor: 'printing' stamp: 'MM 6/4/2018 17:23:16'!
 xPlayedAt: aPosition 
-	board at: aPosition put: 'X'! !
+	board at: aPosition put: 'X'.
+	self printXPlaysAt: aPosition.! !
 
 
 !TicTacToeView methodsFor: 'accessing' stamp: 'MM 6/4/2018 15:34:17'!
