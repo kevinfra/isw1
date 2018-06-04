@@ -455,6 +455,57 @@ test34TicTacToeConsolePrintsStatusAfterXPlays
 	self assert: '''X marcó en 2@2''''Estado: Jugando O''' equals: aStream contents.
 ! !
 
+!TicTacToeTest methodsFor: 'testing' stamp: 'MM 6/4/2018 13:31:43'!
+test35TicTacToeConsolePrintsStatusAfterOPlays
+	| console aStream |
+	game _ TicTacToe new.
+	aStream := ReadWriteStream with: String new.
+	console := TicTacToeConsole printingOn: aStream.
+	game addObserver: console.
+	
+	game markAll: { 2@2. 1@1. }.
+	self assert: '''X marcó en 2@2''''Estado: Jugando O''''O marcó en 1@1''''Estado: Jugando X''' equals: aStream contents.
+! !
+
+!TicTacToeTest methodsFor: 'testing' stamp: 'MM 6/4/2018 14:26:29'!
+test36TicTacToeConsolePrintsStatusAfterXWins
+	| console aStream |
+	game _ TicTacToe new.
+	aStream := ReadWriteStream with: String new.
+	console := TicTacToeConsole printingOn: aStream.
+	game addObserver: console.
+	
+	game markAll: {1@1. 2@1. 1@2. 3@1. 1@3 }.
+	
+	self assert: '''X marcó en 1@1''''Estado: Jugando O''''O marcó en 2@1''''Estado: Jugando X''''X marcó en 1@2''''Estado: Jugando O''''O marcó en 3@1''''Estado: Jugando X''''X marcó en 1@3''''Estado: Juego terminado - Ganó X!!''' equals: aStream contents.
+! !
+
+!TicTacToeTest methodsFor: 'testing' stamp: 'MM 6/4/2018 14:28:58'!
+test37TicTacToeConsolePrintsStatusAfterOWins
+	| console aStream |
+	game _ TicTacToe new.
+	aStream := ReadWriteStream with: String new.
+	console := TicTacToeConsole printingOn: aStream.
+	game addObserver: console.
+	
+	game markAll: {2@1. 1@1. 2@2. 1@2. 3@1. 1@3 }.
+	
+	self assert: '''X marcó en 2@1''''Estado: Jugando O''''O marcó en 1@1''''Estado: Jugando X''''X marcó en 2@2''''Estado: Jugando O''''O marcó en 1@2''''Estado: Jugando X''''X marcó en 3@1''''Estado: Jugando O''''O marcó en 1@3''''Estado: Juego terminado - Ganó O!!''' equals: aStream contents.
+! !
+
+!TicTacToeTest methodsFor: 'testing' stamp: 'MM 6/4/2018 14:32:05'!
+test38TicTacToeConsolePrintsStatusAfterGameIsTied
+	| console aStream |
+	game _ TicTacToe new.
+	aStream := ReadWriteStream with: String new.
+	console := TicTacToeConsole printingOn: aStream.
+	game addObserver: console.
+	
+	game markAll: { 2@2. 1@1. 1@3. 3@1. 2@1. 2@3. 1@2. 3@2. 3@3 }.
+	
+	self assert: '''X marcó en 2@2''''Estado: Jugando O''''O marcó en 1@1''''Estado: Jugando X''''X marcó en 1@3''''Estado: Jugando O''''O marcó en 3@1''''Estado: Jugando X''''X marcó en 2@1''''Estado: Jugando O''''O marcó en 2@3''''Estado: Jugando X''''X marcó en 1@2''''Estado: Jugando O''''O marcó en 3@2''''Estado: Jugando X''''X marcó en 3@3''''Estado: Juego terminado - Empate''' equals: aStream contents.
+! !
+
 
 !TicTacToeTest methodsFor: 'assertions' stamp: 'HAW 10/27/2017 10:29:06'!
 assertCanNotMarkAt: aPosition
@@ -849,16 +900,21 @@ Object subclass: #TicTacToeConsole
 	poolDictionaries: ''
 	category: 'TicTacToe'!
 
-!TicTacToeConsole methodsFor: 'as yet unclassified' stamp: 'KFG 6/4/2018 01:56:47'!
+!TicTacToeConsole methodsFor: 'initialization' stamp: 'KFG 6/4/2018 01:56:47'!
 initializePrintingOn: aStream
 
 	output := aStream! !
 
-!TicTacToeConsole methodsFor: 'as yet unclassified' stamp: 'KFG 6/4/2018 02:05:38'!
+
+!TicTacToeConsole methodsFor: 'printing' stamp: 'MM 6/4/2018 13:28:15'!
+oPlayedAt: aPosition
+	('O marcó en ' append: aPosition asString) printOn: output! !
+
+!TicTacToeConsole methodsFor: 'printing' stamp: 'KFG 6/4/2018 02:05:38'!
 stateUpdatedTo: aTicTacToeState
 	(aTicTacToeState printOn: 'Estado: ') printOn: output.! !
 
-!TicTacToeConsole methodsFor: 'as yet unclassified' stamp: 'KFG 6/4/2018 01:57:48'!
+!TicTacToeConsole methodsFor: 'printing' stamp: 'KFG 6/4/2018 01:57:48'!
 xPlayedAt: aPosition 
 	('X marcó en ' append: aPosition asString) printOn: output! !
 
@@ -973,7 +1029,6 @@ printOn: aStream
 initializeFor: aGame
 
 	game := aGame! !
-
 
 "-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- "!
 
@@ -1166,7 +1221,6 @@ markWithXAt: aPosition
 	game markWithXWhenPlayingOAt: aPosition.! !
 
 
-
 !PlayingO methodsFor: 'printing' stamp: 'KFG 6/4/2018 00:46:30'!
 printOn: aStream
 
@@ -1203,7 +1257,6 @@ markWithOAt: aPosition
 !PlayingX methodsFor: 'marking board' stamp: 'HAW 10/26/2017 12:30:46'!
 markWithXAt: aPosition
 	game markWithXWhenPlayingXAt: aPosition.! !
-
 
 
 !PlayingX methodsFor: 'printing' stamp: 'KFG 6/4/2018 00:45:14'!
