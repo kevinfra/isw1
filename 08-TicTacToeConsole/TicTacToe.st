@@ -471,7 +471,7 @@ test38TicTacToeConsolePrintsStatusAfterGameIsTied
 	self assert: '''X marcó en 2@2''''Estado: Jugando O''''O marcó en 1@1''''Estado: Jugando X''''X marcó en 1@3''''Estado: Jugando O''''O marcó en 3@1''''Estado: Jugando X''''X marcó en 2@1''''Estado: Jugando O''''O marcó en 2@3''''Estado: Jugando X''''X marcó en 1@2''''Estado: Jugando O''''O marcó en 3@2''''Estado: Jugando X''''X marcó en 3@3''''Estado: Juego terminado - Empate''' equals: aStream contents.
 ! !
 
-!TicTacToeTest methodsFor: 'testing' stamp: 'MM 6/4/2018 15:40:04'!
+!TicTacToeTest methodsFor: 'testing' stamp: 'MM 6/4/2018 15:59:13'!
 test39TicTacToeViewPrintsStatusAfterXPlays
 	| view aStream |
 	game _ TicTacToe new.
@@ -481,7 +481,7 @@ test39TicTacToeViewPrintsStatusAfterXPlays
 	
 	game markAll: {2@2}.
 	
-	self assert: 'X' equals: (view board i: 2 j: 2 ).! !
+	self assert: 'X' equals: (view board x: 2 y: 2 ).! !
 
 !TicTacToeTest methodsFor: 'testing' stamp: 'MM 6/4/2018 15:57:54'!
 test40TicTacToeViewPrintsStatusAfterOPlays
@@ -513,6 +513,44 @@ test41TicTacToeViewPrintsStatusAfterXWins
 	self assert: 'X' equals: (view board x: 1 y: 3 ).
 
 ! !
+
+!TicTacToeTest methodsFor: 'testing' stamp: 'MM 6/4/2018 15:59:55'!
+test42TicTacToeViewPrintsStatusAfterOWins
+	| view aStream |
+	game _ TicTacToe new.
+	aStream := ReadWriteStream with: String new.
+	view := TicTacToeView printingOn: aStream.
+	game addObserver: view.
+	
+	game markAll: {2@1. 1@1. 2@2. 1@2. 3@1. 1@3 }.
+	
+	self assert: 'X' equals: (view board x: 2 y: 1 ).
+	self assert: 'O' equals: (view board x: 1 y: 1 ).
+	self assert: 'X' equals: (view board x: 2 y: 2 ).
+	self assert: 'O' equals: (view board x: 1 y: 2 ).
+	self assert: 'X' equals: (view board x: 3 y: 1 ).
+	self assert: 'O' equals: (view board x: 1 y: 3 ).
+! !
+
+!TicTacToeTest methodsFor: 'testing' stamp: 'MM 6/4/2018 16:01:25'!
+test43TicTacToeViewPrintsStatusGameIsTied
+	| view aStream |
+	game _ TicTacToe new.
+	aStream := ReadWriteStream with: String new.
+	view := TicTacToeView printingOn: aStream.
+	game addObserver: view.
+	
+	game markAll: { 2@2. 1@1. 1@3. 3@1. 2@1. 2@3. 1@2. 3@2. 3@3 }.
+	
+	self assert: 'X' equals: (view board x: 2 y: 2 ).
+	self assert: 'O' equals: (view board x: 1 y: 1 ).
+	self assert: 'X' equals: (view board x: 1 y: 3 ).
+	self assert: 'O' equals: (view board x: 3 y: 1 ).
+	self assert: 'X' equals: (view board x: 2 y: 1 ).
+	self assert: 'O' equals: (view board x: 2 y: 3 ).
+	self assert: 'X' equals: (view board x: 1 y: 2 ).
+	self assert: 'O' equals: (view board x: 3 y: 2 ).
+	self assert: 'X' equals: (view board x: 3 y: 3 ).	! !
 
 
 !TicTacToeTest methodsFor: 'assertions' stamp: 'HAW 10/27/2017 10:29:06'!
@@ -576,6 +614,16 @@ assertIsPlayingX
 	self assertGameIsNotOver.
 	! !
 
+!TicTacToeTest methodsFor: 'assertions' stamp: 'MM 6/4/2018 15:44:58'!
+assertNotificationsEquals: notifications onObserver: anObserver
+	self
+		assert: notifications size
+		equals: anObserver notifications size.
+	notifications withIndexDo: [ :notification :index |
+		self
+			assert: notification
+			equals: (anObserver notifications at: index) ].! !
+
 !TicTacToeTest methodsFor: 'assertions' stamp: 'HAW 10/26/2017 15:38:07'!
 assertOIsMarkedOn: oPositions
 		
@@ -616,17 +664,6 @@ assertXWon
 	self deny: game hasPlayerOWon.
 	self deny: game isTied.
 ! !
-
-
-!TicTacToeTest methodsFor: 'as yet unclassified' stamp: 'MM 6/4/2018 15:44:58'!
-assertNotificationsEquals: notifications onObserver: anObserver
-	self
-		assert: notifications size
-		equals: anObserver notifications size.
-	notifications withIndexDo: [ :notification :index |
-		self
-			assert: notification
-			equals: (anObserver notifications at: index) ].! !
 
 
 !classDefinition: #TestObserver category: #TicTacToe!
@@ -911,20 +948,21 @@ Object subclass: #TicTacToeConsole
 	poolDictionaries: ''
 	category: 'TicTacToe'!
 
-!TicTacToeConsole methodsFor: 'as yet unclassified' stamp: 'KFG 6/4/2018 01:56:47'!
+!TicTacToeConsole methodsFor: 'initialization' stamp: 'KFG 6/4/2018 01:56:47'!
 initializePrintingOn: aStream
 
 	output := aStream! !
 
-!TicTacToeConsole methodsFor: 'as yet unclassified' stamp: 'MM 6/4/2018 13:28:15'!
+
+!TicTacToeConsole methodsFor: 'printing' stamp: 'MM 6/4/2018 13:28:15'!
 oPlayedAt: aPosition
 	('O marcó en ' append: aPosition asString) printOn: output! !
 
-!TicTacToeConsole methodsFor: 'as yet unclassified' stamp: 'KFG 6/4/2018 02:05:38'!
+!TicTacToeConsole methodsFor: 'printing' stamp: 'KFG 6/4/2018 02:05:38'!
 stateUpdatedTo: aTicTacToeState
 	(aTicTacToeState printOn: 'Estado: ') printOn: output.! !
 
-!TicTacToeConsole methodsFor: 'as yet unclassified' stamp: 'KFG 6/4/2018 01:57:48'!
+!TicTacToeConsole methodsFor: 'printing' stamp: 'KFG 6/4/2018 01:57:48'!
 xPlayedAt: aPosition 
 	('X marcó en ' append: aPosition asString) printOn: output! !
 
@@ -1298,16 +1336,22 @@ Object subclass: #TicTacToeView
 	poolDictionaries: ''
 	category: 'TicTacToe'!
 
-!TicTacToeView methodsFor: 'initialization' stamp: 'MM 6/4/2018 15:36:20'!
+!TicTacToeView methodsFor: 'initialization' stamp: 'MM 6/4/2018 16:17:53'!
+initializeBoard
+
+	board := Array2D height: 3 width: 3.
+	(1 to: (board height)) do: [ :row | 
+		(1 to: (board width)) do: [ :col |
+			board i: row j: col put: ' '
+		]
+	].! !
+
+!TicTacToeView methodsFor: 'initialization' stamp: 'MM 6/4/2018 16:19:03'!
 initializePrintingOn: aStream
 
 	output := aStream.
-	board := Array2D height: 3 width: 3! !
+	self initializeBoard ! !
 
-
-!TicTacToeView methodsFor: 'printing' stamp: 'MM 6/4/2018 15:34:17'!
-board
-	^board! !
 
 !TicTacToeView methodsFor: 'printing' stamp: 'MM 6/4/2018 15:43:40'!
 oPlayedAt: aPosition 
@@ -1320,6 +1364,11 @@ stateUpdatedTo: aTicTacToeState
 !TicTacToeView methodsFor: 'printing' stamp: 'MM 6/4/2018 15:40:41'!
 xPlayedAt: aPosition 
 	board at: aPosition put: 'X'! !
+
+
+!TicTacToeView methodsFor: 'accessing' stamp: 'MM 6/4/2018 15:34:17'!
+board
+	^board! !
 
 "-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- "!
 
