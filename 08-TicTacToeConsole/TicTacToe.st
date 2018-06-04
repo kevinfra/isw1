@@ -329,7 +329,7 @@ test28WhenXPlaysAnObserverIsNotified
 	self assert: (testObserver notifications at: 1) equals: 'X marcó en 2@2'.
 	self assert: (testObserver notifications at: 2) equals: 'Estado: Jugando O'.! !
 
-!TicTacToeTest methodsFor: 'testing' stamp: 'MM 6/3/2018 01:28:51'!
+!TicTacToeTest methodsFor: 'testing' stamp: 'MM 6/3/2018 18:48:46'!
 test29WhenOPlaysAnObserverIsNotified
 
 	| testObserver |
@@ -337,7 +337,7 @@ test29WhenOPlaysAnObserverIsNotified
 	testObserver := TestObserver new.
 	game addObserver: testObserver.
 	
-	game markAll: {2@2, 1@1}.
+	game markAll: {2@2. 1@1}.
 	
 	self assert: 4 equals: testObserver notifications size.
 	self assert: (testObserver notifications at: 1) equals: 'X marcó en 2@2'.
@@ -468,6 +468,10 @@ notifications
 !TestObserver methodsFor: 'events-registering' stamp: 'MM 6/2/2018 21:04:00'!
 oIsPlaying
 	notifications add: 'Estado: Jugando O'.! !
+
+!TestObserver methodsFor: 'events-registering' stamp: 'MM 6/3/2018 19:09:14'!
+xIsPlaying
+	notifications add: 'Estado: Jugando X'.! !
 
 !TestObserver methodsFor: 'events-registering' stamp: 'MM 6/2/2018 20:05:39'!
 xPlayedAt: aPosition 
@@ -673,6 +677,10 @@ addObserver: aConcreteObserver
 notifyOIsPlaying
 	observer notifyOIsPlaying.! !
 
+!TicTacToe methodsFor: 'events-triggering' stamp: 'MM 6/3/2018 18:54:08'!
+notifyXIsPlaying
+	observer notifyXIsPlaying.! !
+
 "-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- "!
 
 !classDefinition: 'TicTacToe class' category: #TicTacToe!
@@ -724,6 +732,10 @@ initialize
 !TicTacToeObserver methodsFor: 'events-triggering' stamp: 'MM 6/2/2018 21:00:58'!
 notifyOIsPlaying
 	concreteObservers do: [ :aConcreteObserver | aConcreteObserver oIsPlaying]! !
+
+!TicTacToeObserver methodsFor: 'events-triggering' stamp: 'MM 6/3/2018 19:08:08'!
+notifyXIsPlaying
+	concreteObservers do: [ :aConcreteObserver | aConcreteObserver xIsPlaying]! !
 
 !TicTacToeObserver methodsFor: 'events-triggering' stamp: 'MM 6/2/2018 19:57:21'!
 notifyXPlayedAt: aPosition
@@ -1000,3 +1012,8 @@ markWithOAt: aPosition
 !PlayingX methodsFor: 'marking board' stamp: 'HAW 10/26/2017 12:30:46'!
 markWithXAt: aPosition
 	game markWithXWhenPlayingXAt: aPosition.! !
+
+
+!PlayingX methodsFor: 'events-triggering' stamp: 'MM 6/3/2018 18:53:05'!
+notify
+	game notifyXIsPlaying ! !
