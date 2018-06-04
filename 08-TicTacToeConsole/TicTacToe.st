@@ -443,6 +443,18 @@ test33ObserverShowsGameIsTiedAfterPlayersTie
 		'Estado: Juego terminado - Empate'
 	} onObserver: testObserver! !
 
+!TicTacToeTest methodsFor: 'testing' stamp: 'KFG 6/4/2018 02:14:21'!
+test34TicTacToeConsolePrintsStatusAfterXPlays
+	| console aStream |
+	game _ TicTacToe new.
+	aStream := ReadWriteStream with: String new.
+	console := TicTacToeConsole printingOn: aStream.
+	game addObserver: console.
+	
+	game markAll: { 2@2. }.
+	self assert: '''X marcó en 2@2''''Estado: Jugando O''' equals: aStream contents.
+! !
+
 
 !TicTacToeTest methodsFor: 'assertions' stamp: 'HAW 10/27/2017 10:29:06'!
 assertCanNotMarkAt: aPosition
@@ -828,6 +840,38 @@ positionOutsideBoardErrorMessage
 positionTakenErrorMessage
 	
 	^'Position taken'! !
+
+
+!classDefinition: #TicTacToeConsole category: #TicTacToe!
+Object subclass: #TicTacToeConsole
+	instanceVariableNames: 'output'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'TicTacToe'!
+
+!TicTacToeConsole methodsFor: 'as yet unclassified' stamp: 'KFG 6/4/2018 01:56:47'!
+initializePrintingOn: aStream
+
+	output := aStream! !
+
+!TicTacToeConsole methodsFor: 'as yet unclassified' stamp: 'KFG 6/4/2018 02:05:38'!
+stateUpdatedTo: aTicTacToeState
+	(aTicTacToeState printOn: 'Estado: ') printOn: output.! !
+
+!TicTacToeConsole methodsFor: 'as yet unclassified' stamp: 'KFG 6/4/2018 01:57:48'!
+xPlayedAt: aPosition 
+	('X marcó en ' append: aPosition asString) printOn: output! !
+
+"-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- "!
+
+!classDefinition: 'TicTacToeConsole class' category: #TicTacToe!
+TicTacToeConsole class
+	instanceVariableNames: ''!
+
+!TicTacToeConsole class methodsFor: 'as yet unclassified' stamp: 'KFG 6/4/2018 01:56:12'!
+printingOn: aStream
+
+	^self new initializePrintingOn: aStream! !
 
 
 !classDefinition: #TicTacToeObserver category: #TicTacToe!
