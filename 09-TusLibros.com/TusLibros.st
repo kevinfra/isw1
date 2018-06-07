@@ -1,35 +1,33 @@
 !classDefinition: #TusLibrosTests category: #TusLibros!
 TestCase subclass: #TusLibrosTests
-	instanceVariableNames: ''
+	instanceVariableNames: 'catalog newCart'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'TusLibros'!
 
-!TusLibrosTests methodsFor: 'Testing' stamp: 'MM 6/7/2018 01:14:41'!
-test01NewCartIsEmpty
-	| newCart catalog |
+!TusLibrosTests methodsFor: 'Testing' stamp: 'KFG 6/7/2018 03:09:58'!
+setUp
+
 	catalog := Dictionary new.
-	newCart := Cart withItemsFrom: catalog.
-	
+	newCart := Cart withItemsFrom: catalog.! !
+
+!TusLibrosTests methodsFor: 'Testing' stamp: 'KFG 6/7/2018 03:10:17'!
+test01NewCartIsEmpty
+
 	self assert: newCart isEmpty.! !
 
-!TusLibrosTests methodsFor: 'Testing' stamp: 'MM 6/7/2018 01:23:47'!
+!TusLibrosTests methodsFor: 'Testing' stamp: 'KFG 6/7/2018 03:11:09'!
 test02CartIsNotEmptyAfterAddingABook
-	| newCart isbn catalog |
+	| isbn |
 	isbn := 'isbn'.
-	catalog := Dictionary new.
-	catalog at: isbn put: 1.
-	newCart := Cart withItemsFrom: catalog.
-	
+	catalog at: isbn put: 1.	
 	newCart add: isbn.
 	
 	self deny: newCart isEmpty.! !
 
-!TusLibrosTests methodsFor: 'Testing' stamp: 'MM 6/7/2018 01:00:22'!
+!TusLibrosTests methodsFor: 'Testing' stamp: 'KFG 6/7/2018 03:11:59'!
 test03CannotAddItemThatDoesntBelongToStore
-	| newCart isbn catalog|
-	catalog := Dictionary new.
-	newCart := Cart withItemsFrom: catalog.
+	| isbn |
 	isbn := 'isbn'.
 	
 	self should: [newCart add: isbn.]
@@ -39,14 +37,11 @@ test03CannotAddItemThatDoesntBelongToStore
 			self assert: newCart isEmpty.
 		  ]! !
 
-!TusLibrosTests methodsFor: 'Testing' stamp: 'MM 6/7/2018 01:37:53'!
+!TusLibrosTests methodsFor: 'Testing' stamp: 'KFG 6/7/2018 03:12:19'!
 test04CannotAddItemWithQuantityLessThanOne
-	| newCart isbn catalog|
+	| isbn |
 	isbn := 'isbn'.
-	catalog := Dictionary new.
 	catalog at: isbn put: 1.
-	newCart := Cart withItemsFrom: catalog.
-
 	
 	self should: [newCart add: isbn quantity: 0.]
 		  raise: (Error - MessageNotUnderstood)
@@ -55,53 +50,45 @@ test04CannotAddItemWithQuantityLessThanOne
 			self assert: newCart isEmpty.
 		  ]! !
 
-!TusLibrosTests methodsFor: 'Testing' stamp: 'MM 6/7/2018 01:41:56'!
+!TusLibrosTests methodsFor: 'Testing' stamp: 'KFG 6/7/2018 03:12:38'!
 test05CartShouldContainTwiceAnItemWhenQuantityIsTwo
-	| newCart isbn catalog|
+	| isbn |
 	isbn := 'isbn'.
-	catalog := Dictionary new.
 	catalog at: isbn put: 1.
-	newCart := Cart withItemsFrom: catalog.
 	newCart add: isbn quantity: 2.
 	
 	self deny: newCart isEmpty.
 	self assert: (newCart amountOfItem: isbn) equals: 2.! !
 
-!TusLibrosTests methodsFor: 'Testing' stamp: 'MM 6/7/2018 01:46:04'!
+!TusLibrosTests methodsFor: 'Testing' stamp: 'KFG 6/7/2018 03:12:52'!
 test06CartShouldContainTwiceAnItemWhenItsAddedTwice
-	| newCart isbn catalog|
+	| isbn |
 	isbn := 'isbn'.
-	catalog := Dictionary new.
 	catalog at: isbn put: 1.
-	newCart := Cart withItemsFrom: catalog.
 	newCart add: isbn.
 	newCart add: isbn.
 		
 	self deny: newCart isEmpty.
 	self assert: (newCart amountOfItem: isbn) equals: 2.! !
 
-!TusLibrosTests methodsFor: 'Testing' stamp: 'MM 6/7/2018 01:52:14'!
+!TusLibrosTests methodsFor: 'Testing' stamp: 'KFG 6/7/2018 03:13:04'!
 test07AddingAnItemToCartOnlyAddsThatItem
-	| newCart isbn catalog|
+	| isbn |
 	isbn := 'isbn'.
-	catalog := Dictionary new.
 	catalog at: isbn put: 1.
-	newCart := Cart withItemsFrom: catalog.
 	newCart add: isbn.
 			
 	self deny: newCart isEmpty.
 	self assert: (newCart amountOfItem: isbn) equals: 1.
 	self assert: (newCart totalItems) equals: 1.! !
 
-!TusLibrosTests methodsFor: 'Testing' stamp: 'MM 6/7/2018 02:21:36'!
+!TusLibrosTests methodsFor: 'Testing' stamp: 'KFG 6/7/2018 03:13:15'!
 test08TotalItemsOfCartMustEqualTheSumOfAllQuantities
-	| newCart isbn catalog isbn2 |
+	| isbn isbn2 |
 	isbn := 'isbn'.
 	isbn2 := 'isbn2'.
-	catalog := Dictionary new.
 	catalog at: isbn put: 1.
 	catalog at: isbn2 put: 1.
-	newCart := Cart withItemsFrom: catalog.
 	newCart add: isbn quantity: 2.
 	newCart add: isbn2.
 			
@@ -110,15 +97,13 @@ test08TotalItemsOfCartMustEqualTheSumOfAllQuantities
 	self assert: (newCart amountOfItem: isbn2) equals: 1.
 	self assert: (newCart totalItems) equals: 3.! !
 
-!TusLibrosTests methodsFor: 'Testing' stamp: 'MM 6/7/2018 02:46:22'!
+!TusLibrosTests methodsFor: 'Testing' stamp: 'KFG 6/7/2018 03:13:30'!
 test09CartItemsOnlyIncludeAddedItems
-	| newCart isbn catalog isbn2 addedItems newCartContents |
+	| isbn isbn2 addedItems newCartContents |
 	isbn := 'isbn'.
 	isbn2 := 'isbn2'.
-	catalog := Dictionary new.
 	catalog at: isbn put: 1.
 	catalog at: isbn2 put: 1.
-	newCart := Cart withItemsFrom: catalog.
 	newCart add: isbn quantity: 2.
 	newCart add: isbn2.
 	
@@ -141,18 +126,16 @@ Object subclass: #Cart
 add: anItem
 	^self add: anItem quantity: 1! !
 
-!Cart methodsFor: 'adding' stamp: 'MM 6/7/2018 02:57:59'!
+!Cart methodsFor: 'adding' stamp: 'KFG 6/7/2018 03:04:06'!
 add: anItem quantity: aQuantity
-	| previousQuantity |
 	catalog
 		at: anItem
 		ifAbsent: [ ^ self error: self class invalidItemErrorMessage ].
 	aQuantity < 1 ifTrue: [ ^ self error: self class invalidQuantityErrorMessage ].
 	
-	previousQuantity := self amountOfItem: anItem.
 	contents
-		at: anItem
-		put: aQuantity + previousQuantity .! !
+		add: anItem
+		withOccurrences: aQuantity! !
 
 
 !Cart methodsFor: 'initialization' stamp: 'MM 6/7/2018 02:57:02'!
@@ -161,24 +144,21 @@ initializeWith: aCatalog
 	catalog := aCatalog.! !
 
 
-!Cart methodsFor: 'accessing' stamp: 'MM 6/7/2018 01:44:49'!
+!Cart methodsFor: 'accessing' stamp: 'KFG 6/7/2018 03:05:14'!
 amountOfItem: anItem 
-	^contents at: anItem ifAbsent: [0]. ! !
+	^contents occurrencesOf: anItem. ! !
 
-!Cart methodsFor: 'accessing' stamp: 'MM 6/7/2018 02:54:20'!
+!Cart methodsFor: 'accessing' stamp: 'KFG 6/7/2018 03:06:27'!
 contents
-	| itemCollection |
-	itemCollection _ Bag new.
-	^ contents keysAndValuesDo: [ :item :quantity |
-		itemCollection add: item withOccurrences: quantity ].! !
+	^ contents copy! !
 
 !Cart methodsFor: 'accessing' stamp: 'MM 6/7/2018 00:28:41'!
 isEmpty
 	^contents isEmpty ! !
 
-!Cart methodsFor: 'accessing' stamp: 'MM 6/7/2018 01:54:16'!
+!Cart methodsFor: 'accessing' stamp: 'KFG 6/7/2018 03:08:47'!
 totalItems
-	^contents values inject: 0 into: [ :totalItems :itemQuantity | totalItems + itemQuantity ].! !
+	^contents size! !
 
 "-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- "!
 
