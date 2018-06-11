@@ -179,46 +179,26 @@ test03CannotCheckoutItemThatIsNotInCatalog
 				assert: anError messageText
 				equals: Cashier itemIsNotInCatalogErrorMessage ].! !
 
-!CashierTests methodsFor: 'Testing' stamp: 'KFG 6/10/2018 18:59:40'!
-test04CannotCheckoutWithInvalidNumberOfCreditCard
-	| anotherCreditCard |
+!CashierTests methodsFor: 'Testing' stamp: 'KFG 6/11/2018 13:13:28'!
+test04CannotCreateCreditCardWithInvalidOwner
 	catalog
 		at: 'isbn'
 		put: 10.
 	cart add: 'isbn'.
-	anotherCreditCard := CreditCard withNumber: '1234' ownedBy:'Me'  expiresOn:GregorianMonthOfYear current next.
-	
 	self
-		should: [ Cashier withCatalog: catalog
-		withCart: cart
-		withCreditCard: anotherCreditCard . ]
+		should: [
+			CreditCard
+				withNumber: '1234123412341234'
+				ownedBy: ''
+				expiresOn: GregorianMonthOfYear current next. ]
 		raise: Error - MessageNotUnderstood
 		withExceptionDo: [ :anError |
 			self
 				assert: anError messageText
-				equals: Cashier invalidCreditCardNumberErrorMessage ].! !
+				equals: CreditCard invalidCreditCardOwnerErrorMessage ].! !
 
-!CashierTests methodsFor: 'Testing' stamp: 'KFG 6/10/2018 18:59:36'!
-test05CannotCheckoutWithInvalidOwnerOfCreditCard
-	| anotherCreditCard |
-	catalog
-		at: 'isbn'
-		put: 10.
-	cart add: 'isbn'.
-	anotherCreditCard := CreditCard withNumber: '1234123412341234' ownedBy:''  expiresOn:GregorianMonthOfYear current next.
-	
-	self
-		should: [ Cashier withCatalog: catalog
-		withCart: cart
-		withCreditCard: anotherCreditCard . ]
-		raise: Error - MessageNotUnderstood
-		withExceptionDo: [ :anError |
-			self
-				assert: anError messageText
-				equals: Cashier invalidCreditCardOwnerErrorMessage ].! !
-
-!CashierTests methodsFor: 'Testing' stamp: 'KFG 6/10/2018 18:59:31'!
-test06CannotCheckoutWithExpiredCreditCard
+!CashierTests methodsFor: 'Testing' stamp: 'KFG 6/11/2018 13:11:06'!
+test05CannotCheckoutWithExpiredCreditCard
 	| anotherCreditCard |
 	catalog
 		at: 'isbn'
@@ -349,30 +329,21 @@ cartCannotBeEmptyErrorMessage
 expiredCreditCardErrorMessage
 	^'The credit card is expired'! !
 
-!Cashier class methodsFor: 'error messages' stamp: 'MM 6/10/2018 18:20:44'!
-invalidCreditCardNumberErrorMessage
-	^'The credit card number doesnt have 16 digits'! !
-
-!Cashier class methodsFor: 'error messages' stamp: 'MM 6/10/2018 18:38:00'!
-invalidCreditCardOwnerErrorMessage
-	^'The credit card owner is empty'! !
-
 !Cashier class methodsFor: 'error messages' stamp: 'MM 6/10/2018 17:41:52'!
 itemIsNotInCatalogErrorMessage
 	^'Item is not in catalog'.! !
 
 
-!Cashier class methodsFor: 'initialization' stamp: 'MM 6/10/2018 18:36:15'!
+!Cashier class methodsFor: 'initialization' stamp: 'KFG 6/11/2018 13:07:50'!
 withCatalog: aCatalog withCart: aCart withCreditCard: aCreditCard
-	self assertIfCreditCardIsValid: aCreditCard .
+	(aCreditCard expiredOn: GregorianMonthOfYear current) ifTrue: [^self error: self expiredCreditCardErrorMessage ].
+
 	^self new initializeWithCatalog: aCatalog withCart: aCart withCreditCard: aCreditCard .! !
 
 
-!Cashier class methodsFor: 'testing' stamp: 'KFG 6/10/2018 19:01:02'!
+!Cashier class methodsFor: 'testing' stamp: 'KFG 6/11/2018 12:59:59'!
 assertIfCreditCardIsValid: aCreditCard
-	(aCreditCard number size = 16) ifFalse: [^self error: self invalidCreditCardNumberErrorMessage ].
-	(aCreditCard owner size > 0) ifFalse: [^self error: self invalidCreditCardOwnerErrorMessage ].
-	(aCreditCard expirationDate > GregorianMonthOfYear current) ifFalse: [^self error: self expiredCreditCardErrorMessage ].! !
+	! !
 
 
 !classDefinition: #CreditCard category: #TusLibros!
@@ -401,12 +372,24 @@ number
 owner
 	^owner ! !
 
+
+!CreditCard methodsFor: 'validation' stamp: 'KFG 6/11/2018 13:01:08'!
+expiredOn: aGregorianMonthOfYear
+
+	^expirationDate <= aGregorianMonthOfYear ! !
+
 "-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- "!
 
 !classDefinition: 'CreditCard class' category: #TusLibros!
 CreditCard class
 	instanceVariableNames: ''!
 
-!CreditCard class methodsFor: 'initialization' stamp: 'MM 6/10/2018 18:09:04'!
+!CreditCard class methodsFor: 'initialization' stamp: 'KFG 6/11/2018 13:11:26'!
 withNumber: aNumber ownedBy: anOwner expiresOn: aDate
+	(anOwner size > 0) ifFalse: [^self error: self invalidCreditCardOwnerErrorMessage ].
 	^self new initializeWithNumber: aNumber ownedBy: anOwner expiresOn: aDate! !
+
+
+!CreditCard class methodsFor: 'error messages' stamp: 'KFG 6/11/2018 13:04:02'!
+invalidCreditCardOwnerErrorMessage
+	^'The credit card owner is empty'! !
